@@ -1,0 +1,189 @@
+@page
+@model CapYdp.Web.Pages.OgrenciPaneli.IndexModel
+@{
+    ViewData["Title"] = "Öğrenci Durum Özeti";
+    var yuzde = Model.ToplamHedefAkts > 0
+        ? (int)Math.Round(100.0 * Model.TamamlananAkts / Model.ToplamHedefAkts)
+        : 0;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="mb-0">
+            Merhaba, @Model.Ogrenci.Kullanici.AdSoyad
+            <span class="badge bg-dark fs-6 ms-1">@Model.Ogrenci.ProgramTuru</span>
+        </h3>
+        <span class="text-muted small">
+            Öğrenci No: <code>@Model.Ogrenci.OgrenciNo</code> · Kabul Dönemi: <strong>@Model.Ogrenci.KabulDonemi.DonemAdi</strong> · Anadal: @Model.Ogrenci.AnadalBolum
+        </span>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-page="/OgrenciPaneli/DersGirisi" class="btn btn-primary btn-sm">+ Dönemlik Ders Seçimi</a>
+        <a asp-page="/OgrenciPaneli/NotGirisi" class="btn btn-outline-dark btn-sm">Dönem Sonu Not Girişi</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Tamamlanan / Toplam AKTS</div>
+                <div class="display-6 fw-bold text-success">@Model.TamamlananAkts <span class="fs-5 text-muted">/ @Model.ToplamHedefAkts</span></div>
+                <div class="progress mt-2" style="height: 8px;">
+                    <div class="progress-bar bg-success" style="width: @(yuzde)%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Kalan AKTS</div>
+                <div class="display-6 fw-bold text-primary">@Model.KalanAkts</div>
+                <span class="small text-muted">Tamamlanan Ders: @Model.TamamlananDersSayisi</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Onay Bekleyen İşlemlerim</div>
+                <div class="display-6 fw-bold text-warning">@Model.BekleyenIslemSayisi</div>
+                <span class="small text-muted">Koordinatör onayı bekleniyor</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Anadal GANO</div>
+                <div class="display-6 fw-bold text-dark">@(Model.Ogrenci.AnadalGano?.ToString("0.00") ?? "-")</div>
+                <span class="small text-muted">@(Model.Ogrenci.GanoKaynagi ?? "Koordinatör tarafından girilir")</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 1) Dönemlik Ders ve Not Kayıtlarım -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white fw-semibold">
+        Dönemlik Aldığım Dersler ve Onay Durumları (Her Deneme Ayrı Gösterilir)
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-sm table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-3">Dönem</th>
+                    <th>Ders Kodu</th>
+                    <th>Ders Adı</th>
+                    <th>AKTS</th>
+                    <th>Deneme</th>
+                    <th>Ders Kaydı Onayı</th>
+                    <th>Harf Notu / Puan</th>
+                    <th>Not Onayı</th>
+                    <th class="pe-3">Durum</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var dk in Model.Ogrenci.DersKayitlari)
+                {
+                    <tr>
+                        <td class="ps-3 small">@dk.Donem.DonemAdi</td>
+                        <td><code>@dk.Ders.DersKodu</code></td>
+                        <td>@dk.Ders.DersAdi</td>
+                        <td>@dk.Ders.Akts</td>
+                        <td>@dk.DenemeSayisi. deneme</td>
+                        <td>
+                            <span class="badge @(dk.KayitOnayDurumu == OnayDurumu.Onaylandi ? "bg-success" : dk.KayitOnayDurumu == OnayDurumu.Bekliyor ? "bg-warning text-dark" : "bg-danger")">
+                                @dk.KayitOnayDurumu
+                            </span>
+                            @if (dk.KayitKilitliMi)
+                            {
+                                <span class="text-muted small ms-1" title="Onaylanan kayıt kilitlenir">🔒</span>
+                            }
+                            @if (!string.IsNullOrEmpty(dk.KayitRedGerekce))
+                            {
+                                <div class="small text-danger">Gerekçe: @dk.KayitRedGerekce</div>
+                            }
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(dk.HarfNotu))
+                            {
+                                <strong>@dk.HarfNotu</strong> <span class="text-muted small">(@dk.PuanNotu)</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">-</span>
+                            }
+                        </td>
+                        <td>
+                            @if (dk.NotOnayDurumu.HasValue)
+                            {
+                                <span class="badge @(dk.NotOnayDurumu == OnayDurumu.Onaylandi ? "bg-success" : dk.NotOnayDurumu == OnayDurumu.Bekliyor ? "bg-warning text-dark" : "bg-danger")">
+                                    @dk.NotOnayDurumu
+                                </span>
+                                @if (!string.IsNullOrEmpty(dk.NotRedGerekce))
+                                {
+                                    <div class="small text-danger">Gerekçe: @dk.NotRedGerekce</div>
+                                }
+                            }
+                            else
+                            {
+                                <span class="text-muted small">-</span>
+                            }
+                        </td>
+                        <td class="pe-3"><span class="badge bg-dark">@dk.DersDurumu</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 2) Protokol Ders Listem (Tamamlanan ve Kalan Dersler) -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white fw-semibold">
+        Protokol Ders Listem — Tamamlanan ve Kalan Dersler
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-sm table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-3">Ders Kodu</th>
+                    <th>Ders Adı</th>
+                    <th>Yarıyıl</th>
+                    <th>AKTS</th>
+                    <th>Tür</th>
+                    <th class="pe-3">Tamamlanma Durumu</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var dl in Model.Ogrenci.DersListesi.Where(x => x.Durum != DersListesiDurumu.Cikarildi))
+                {
+                    var tamamlandi = Model.GecilenDersIdleri.Contains(dl.DersId);
+                    <tr>
+                        <td class="ps-3"><code>@dl.Ders.DersKodu</code></td>
+                        <td>@dl.Ders.DersAdi</td>
+                        <td>@dl.Ders.Yariyil. Yarıyıl</td>
+                        <td>@dl.Ders.Akts</td>
+                        <td class="small">@dl.Ders.DersTuru</td>
+                        <td class="pe-3">
+                            @if (dl.Durum == DersListesiDurumu.Muaf)
+                            {
+                                <span class="badge bg-info text-dark">Muaf</span>
+                            }
+                            else if (tamamlandi)
+                            {
+                                <span class="badge bg-success">Tamamlandı (Onaylı)</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Kalan Ders</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,90 @@
+@page
+@model CapYdp.Web.Pages.Hesap.GirisModel
+@inject IWebHostEnvironment Ortam
+@{
+    ViewData["Title"] = "Sisteme Giriş";
+}
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-5">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white py-3">
+                <h5 class="mb-0">SÜ Bilgisayar Mühendisliği · ÇAP / YDP Giriş</h5>
+            </div>
+            <div class="card-body p-4">
+                @if (!string.IsNullOrEmpty(Model.HataMesaji))
+                {
+                    <div class="alert alert-danger">@Model.HataMesaji</div>
+                }
+
+                <form method="post">
+                    <div class="mb-3">
+                        <label asp-for="Girdi.Email" class="form-label fw-semibold">Kurumsal E-Posta Adresi</label>
+                        <input asp-for="Girdi.Email" id="emailInput" class="form-control" placeholder="ornek@selcuk.edu.tr" autocomplete="username" />
+                        <span asp-validation-for="Girdi.Email" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Girdi.Sifre" class="form-label fw-semibold">Şifre</label>
+                        <input asp-for="Girdi.Sifre" id="sifreInput" class="form-control" autocomplete="current-password" />
+                        <span asp-validation-for="Girdi.Sifre" class="text-danger small"></span>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input asp-for="Girdi.BeniHatirla" class="form-check-input" />
+                        <label asp-for="Girdi.BeniHatirla" class="form-check-label">Oturumu açık tut</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">Giriş Yap</button>
+                </form>
+
+                <hr class="my-3" />
+                <p class="text-muted small mb-0">
+                    <strong>Bilgi:</strong> Sisteme dışarıdan açık kayıt yapılamaz. Dekanlık tarafından kabul edilen ÇAP ve YDP öğrencilerinin hesapları Bölüm Koordinatörü tarafından oluşturulur.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    @if (Ortam.IsDevelopment())
+    {
+        <div class="col-md-5 mt-3 mt-md-0">
+            <div class="card border-secondary shadow-sm">
+                <div class="card-header bg-secondary text-white py-2">
+                    <strong>Geliştirme / MVP Demo Hesapları (Tek Tıkla Doldur)</strong>
+                </div>
+                <div class="card-body small">
+                    <p class="text-muted mb-2">30 Ekim MVP sunumunda rolleri hızlıca göstermek için aşağıdaki butonlara tıklayabilirsiniz:</p>
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-dark btn-sm text-start"
+                                onclick="doldur('koordinator@selcuk.edu.tr', 'CapYdp!2026')">
+                            <strong>1. Koordinatör</strong> — <code>koordinator@selcuk.edu.tr</code>
+                        </button>
+                        <button type="button" class="btn btn-outline-primary btn-sm text-start"
+                                onclick="doldur('ahmet.yilmaz@ogr.selcuk.edu.tr', 'CapYdp!2026')">
+                            <strong>2. ÇAP Öğrencisi (Ahmet Yılmaz)</strong> — <code>ahmet.yilmaz@ogr.selcuk.edu.tr</code>
+                        </button>
+                        <button type="button" class="btn btn-outline-info btn-sm text-start"
+                                onclick="doldur('zeynep.kaya@ogr.selcuk.edu.tr', 'CapYdp!2026')">
+                            <strong>3. YDP Öğrencisi (Zeynep Kaya)</strong> — <code>zeynep.kaya@ogr.selcuk.edu.tr</code>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm text-start"
+                                onclick="doldur('bolumbaskani@selcuk.edu.tr', 'CapYdp!2026')">
+                            <strong>4. Bölüm Başkanı (Salt Okuma)</strong> — <code>bolumbaskani@selcuk.edu.tr</code>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function doldur(email, sifre) {
+            document.getElementById('emailInput').value = email;
+            document.getElementById('sifreInput').value = sifre;
+        }
+    </script>
+}

@@ -1,0 +1,307 @@
+@page "{id:int}"
+@model CapYdp.Web.Pages.Koordinator.OgrenciDetayModel
+@{
+    ViewData["Title"] = $"Öğrenci Kartı — {Model.Ogrenci.Kullanici.AdSoyad}";
+    var yuzde = Model.ToplamHedefAkts > 0
+        ? (int)Math.Round(100.0 * Model.TamamlananAkts / Model.ToplamHedefAkts)
+        : 0;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <a asp-page="/Koordinator/Ogrenciler" class="text-decoration-none small">&larr; Öğrenci Listesine Dön</a>
+        <h3 class="mb-0 mt-1">
+            @Model.Ogrenci.Kullanici.AdSoyad
+            <span class="badge bg-dark fs-6 ms-1">@Model.Ogrenci.ProgramTuru</span>
+            <span class="badge bg-secondary fs-6">@Model.Ogrenci.Durum</span>
+        </h3>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white fw-semibold">Öğrenci ve Program Bilgileri</div>
+            <div class="card-body small">
+                <div class="mb-1"><strong>Öğrenci No:</strong> <code>@Model.Ogrenci.OgrenciNo</code></div>
+                <div class="mb-1"><strong>E-Posta:</strong> @Model.Ogrenci.Kullanici.Email</div>
+                <div class="mb-1"><strong>Anadal:</strong> @Model.Ogrenci.AnadalFakulte / @Model.Ogrenci.AnadalBolum</div>
+                <div class="mb-1"><strong>Kabul Dönemi:</strong> @Model.Ogrenci.KabulDonemi.DonemAdi</div>
+                <hr class="my-2" />
+                <div><strong>Tamamlanma Durumu (Onaylı AKTS):</strong></div>
+                <div class="d-flex justify-content-between small mt-1">
+                    <span>Tamamlanan: <strong>@Model.TamamlananAkts AKTS</strong></span>
+                    <span>Kalan: <strong>@Model.KalanAkts AKTS</strong></span>
+                </div>
+                <div class="progress mt-1" style="height: 10px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: @(yuzde)%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white fw-semibold">Anadal GANO Bilgisi (Koordinatör Girişi)</div>
+            <div class="card-body small">
+                <p class="mb-2">
+                    Mevcut GANO:
+                    <strong class="fs-5">@(Model.Ogrenci.AnadalGano?.ToString("0.00") ?? "Girilmedi")</strong>
+                    @if (!string.IsNullOrEmpty(Model.Ogrenci.GanoKaynagi))
+                    {
+                        <span class="text-muted d-block">Kaynak: @Model.Ogrenci.GanoKaynagi (@Model.Ogrenci.GanoGuncellemeTarihi?.ToString("yyyy-MM-dd"))</span>
+                    }
+                </p>
+                <form method="post" asp-page-handler="GanoGuncelle" asp-route-id="@Model.Ogrenci.Id" class="row g-2">
+                    <div class="col-5">
+                        <input type="number" name="anadalGano" step="0.01" min="0" max="4"
+                               value="@Model.Ogrenci.AnadalGano" class="form-control form-control-sm" placeholder="Örn: 3.12" required />
+                    </div>
+                    <div class="col-7">
+                        <input type="text" name="ganoKaynagi" class="form-control form-control-sm"
+                               placeholder="Kaynak (Örn: Transkript)" required />
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-outline-primary btn-sm w-100">Kaynağıyla GANO Güncelle</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white fw-semibold">Öğrenci Durumu Güncelleme</div>
+            <div class="card-body small">
+                <form method="post" asp-page-handler="DurumGuncelle" asp-route-id="@Model.Ogrenci.Id" class="row g-2">
+                    <div class="col-12">
+                        <select name="yeniDurum" class="form-select form-select-sm">
+                            @foreach (var d in Enum.GetValues<OgrenciDurumu>())
+                            {
+                                <option value="@d" selected="@(Model.Ogrenci.Durum == d)">@d</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <input type="text" name="gerekce" class="form-control form-control-sm"
+                               placeholder="Durum değişiklik gerekçesi (Zorunlu)" required />
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-outline-dark btn-sm w-100">Gerekçeli Durum Güncelle</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 1) Protokol Ders Listesi -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">Protokol / Öğrencinin Alacağı Dersler Listesi (@Model.Ogrenci.DersListesi.Count ders)</span>
+        <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#dersAtamaPanel">
+            + Katalogdan Ders Ata
+        </button>
+    </div>
+
+    <div class="collapse border-bottom bg-light p-3" id="dersAtamaPanel">
+        <form method="post" asp-page-handler="DersAta" asp-route-id="@Model.Ogrenci.Id" class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label small fw-semibold">Katalogdan Ders Seçin</label>
+                <select name="dersId" class="form-select form-select-sm" required>
+                    @foreach (var d in Model.AktifKatalogDersleri)
+                    {
+                        <option value="@d.Id">@d.DersKodu — @d.DersAdi (@d.Akts AKTS, @d.Yariyil. Yarıyıl)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Atama Gerekçesi</label>
+                <input type="text" name="gerekce" class="form-control form-control-sm" value="Protokol ders ataması" required />
+            </div>
+            <div class="col-md-3 d-flex align-items-center justify-content-between">
+                <div class="form-check">
+                    <input type="checkbox" name="ozelSartliMi" value="true" class="form-check-input" id="ozelSartCheck" />
+                    <label for="ozelSartCheck" class="form-check-label small">Özel Şartlı</label>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Listeye Ekle</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card-body p-0">
+        <table class="table table-sm table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-3">Ders Kodu</th>
+                    <th>Ders Adı</th>
+                    <th>Yarıyıl</th>
+                    <th>AKTS</th>
+                    <th>Tür</th>
+                    <th>Liste Durumu</th>
+                    <th>Son Gerekçe</th>
+                    <th class="text-end pe-3">Gerekçeli Değişiklik</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var dl in Model.Ogrenci.DersListesi)
+                {
+                    var badge = dl.Durum switch
+                    {
+                        DersListesiDurumu.Aktif => "bg-primary",
+                        DersListesiDurumu.Muaf => "bg-info text-dark",
+                        DersListesiDurumu.Cikarildi => "bg-secondary",
+                        _ => "bg-secondary"
+                    };
+                    <tr>
+                        <td class="ps-3"><code>@dl.Ders.DersKodu</code></td>
+                        <td>
+                            @dl.Ders.DersAdi
+                            @if (dl.OzelSartliMi)
+                            {
+                                <span class="badge bg-warning text-dark ms-1">Özel Şartlı</span>
+                            }
+                        </td>
+                        <td>@dl.Ders.Yariyil</td>
+                        <td>@dl.Ders.Akts</td>
+                        <td class="small">@dl.Ders.DersTuru</td>
+                        <td><span class="badge @badge">@dl.Durum</span></td>
+                        <td class="small text-muted">@(dl.DegisiklikGerekce ?? "-")</td>
+                        <td class="text-end pe-3">
+                            <form method="post" asp-page-handler="DersListesiDurum" asp-route-id="@Model.Ogrenci.Id" class="d-inline-flex gap-1">
+                                <input type="hidden" name="listeKayitId" value="@dl.Id" />
+                                <select name="yeniDurum" class="form-select form-select-sm" style="width: 110px;">
+                                    <option value="Aktif" selected="@(dl.Durum == DersListesiDurumu.Aktif)">Aktif</option>
+                                    <option value="Muaf" selected="@(dl.Durum == DersListesiDurumu.Muaf)">Muaf</option>
+                                    <option value="Cikarildi" selected="@(dl.Durum == DersListesiDurumu.Cikarildi)">Çıkarıldı</option>
+                                </select>
+                                <input type="text" name="gerekce" class="form-control form-control-sm" style="width: 160px;"
+                                       placeholder="Gerekçe..." required />
+                                <button type="submit" class="btn btn-outline-secondary btn-sm">Uygula</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 2) Dönemlik Ders Takip Tablosu + Mevcut Öğrenci Geriye Dönük Aktarım -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">Dönemlik Ders Kayıtları ve Not Takip Tablosu</span>
+        <button class="btn btn-outline-dark btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#geriyeDonukPanel">
+            + Geriye Dönük Ders/Not Girişi (Mevcut Öğrenci Aktarımı)
+        </button>
+    </div>
+
+    <div class="collapse border-bottom bg-light p-3" id="geriyeDonukPanel">
+        <div class="small text-muted mb-2">
+            <strong>Mevcut Öğrenci Aktarımı (Rapor 4.2.2):</strong> Sistem açıldığında bölümde hâlihazırda kayıtlı olan öğrencilerin geçmiş dönem kayıtları koordinatör tarafından doğrudan onaylı olarak girilebilir.
+        </div>
+        <form method="post" asp-page-handler="GeriyeDonukKayit" asp-route-id="@Model.Ogrenci.Id" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Dönem</label>
+                <select name="donemId" class="form-select form-select-sm" required>
+                    @foreach (var d in Model.Donemler)
+                    {
+                        <option value="@d.Id">@d.DonemAdi</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Ders</label>
+                <select name="dersId" class="form-select form-select-sm" required>
+                    @foreach (var d in Model.AktifKatalogDersleri)
+                    {
+                        <option value="@d.Id">@d.DersKodu — @d.DersAdi</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-1">
+                <label class="form-label small fw-semibold">Harf</label>
+                <input type="text" name="harfNotu" class="form-control form-control-sm" placeholder="BB" maxlength="2" required />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold">Puan (100'lük)</label>
+                <input type="number" name="puanNotu" step="0.01" min="0" max="100" class="form-control form-control-sm" placeholder="80" required />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold">Sonuç</label>
+                <select name="dersDurumu" class="form-select form-select-sm">
+                    <option value="Gecti">Geçti</option>
+                    <option value="Kaldi">Kaldı</option>
+                    <option value="Muaf">Muaf</option>
+                </select>
+            </div>
+            <div class="col-12 text-end">
+                <button type="submit" class="btn btn-dark btn-sm">Geriye Dönük Kaydı Onaylı Olarak Ekle</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card-body p-0">
+        <table class="table table-sm table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-3">Dönem</th>
+                    <th>Ders Kodu</th>
+                    <th>Ders Adı</th>
+                    <th>AKTS</th>
+                    <th>Deneme</th>
+                    <th>Kayıt Onayı</th>
+                    <th>Harf / Puan</th>
+                    <th>Not Onayı</th>
+                    <th class="pe-3">Ders Durumu</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var dk in Model.Ogrenci.DersKayitlari)
+                {
+                    <tr>
+                        <td class="ps-3 small">@dk.Donem.DonemAdi</td>
+                        <td><code>@dk.Ders.DersKodu</code></td>
+                        <td>
+                            @dk.Ders.DersAdi
+                            @if (dk.GeriyeDonukMu)
+                            {
+                                <span class="badge bg-secondary ms-1">Aktarım</span>
+                            }
+                        </td>
+                        <td>@dk.Ders.Akts</td>
+                        <td>@dk.DenemeSayisi. deneme</td>
+                        <td>
+                            <span class="badge @(dk.KayitOnayDurumu == OnayDurumu.Onaylandi ? "bg-success" : dk.KayitOnayDurumu == OnayDurumu.Bekliyor ? "bg-warning text-dark" : "bg-danger")">
+                                @dk.KayitOnayDurumu
+                            </span>
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(dk.HarfNotu))
+                            {
+                                <strong>@dk.HarfNotu</strong> <span class="text-muted small">(@dk.PuanNotu)</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">-</span>
+                            }
+                        </td>
+                        <td>
+                            @if (dk.NotOnayDurumu.HasValue)
+                            {
+                                <span class="badge @(dk.NotOnayDurumu == OnayDurumu.Onaylandi ? "bg-success" : dk.NotOnayDurumu == OnayDurumu.Bekliyor ? "bg-warning text-dark" : "bg-danger")">
+                                    @dk.NotOnayDurumu
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">Girilmedi</span>
+                            }
+                        </td>
+                        <td class="pe-3"><span class="badge bg-dark">@dk.DersDurumu</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

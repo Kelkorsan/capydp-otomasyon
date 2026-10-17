@@ -1,0 +1,174 @@
+@page
+@model CapYdp.Web.Pages.Koordinator.DerslerModel
+@{
+    ViewData["Title"] = "Ders Kataloğu Yönetimi";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="mb-0">Bölüm Ders Kataloğu ve Protokol Muafiyet Kuralları</h3>
+        <span class="text-muted small">Dersler silinmez; pasife alınan derslerin geçmiş kayıtları korunur, yeni ders seçimlerinde görünmez.</span>
+    </div>
+    <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#yeniDersFormu">
+        + Kataloğa Yeni Ders Ekle
+    </button>
+</div>
+
+<div class="collapse mb-4" id="yeniDersFormu">
+    <div class="card border-primary shadow-sm">
+        <div class="card-header bg-primary text-white fw-semibold">Yeni Ders Tanımla</div>
+        <div class="card-body">
+            <form method="post" asp-page-handler="DersEkle" class="row g-2 align-items-end">
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold">Ders Kodu</label>
+                    <input asp-for="YeniDers.DersKodu" class="form-control form-control-sm" placeholder="3301570" required />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Ders Adı</label>
+                    <input asp-for="YeniDers.DersAdi" class="form-control form-control-sm" placeholder="Siber Güvenliğe Giriş" required />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold">AKTS</label>
+                    <input asp-for="YeniDers.Akts" type="number" min="1" max="30" class="form-control form-control-sm" required />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold">Yarıyıl</label>
+                    <input asp-for="YeniDers.Yariyil" type="number" min="1" max="8" class="form-control form-control-sm" required />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold">Tür</label>
+                    <select asp-for="YeniDers.DersTuru" class="form-select form-select-sm"
+                            asp-items="Html.GetEnumSelectList<DersTuru>()"></select>
+                </div>
+                <div class="col-12 text-end mt-2">
+                    <button type="submit" class="btn btn-success btn-sm px-4">Kataloğa Ekle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white fw-semibold">
+        Ders Havuzu (@Model.Dersler.Count(d => d.AktifMi) aktif / @Model.Dersler.Count toplam)
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-sm table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-3">Ders Kodu</th>
+                    <th>Ders Adı</th>
+                    <th>Yarıyıl</th>
+                    <th>AKTS</th>
+                    <th>Ders Türü</th>
+                    <th>Durum</th>
+                    <th class="text-end pe-3">Güncelle / Pasife Al</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var d in Model.Dersler)
+                {
+                    <tr class="@(d.AktifMi ? "" : "table-secondary text-muted")">
+                        <td class="ps-3"><code>@d.DersKodu</code></td>
+                        <td colspan="4">
+                            <form method="post" asp-page-handler="DersGuncelle" class="row g-1 align-items-center">
+                                <input type="hidden" name="id" value="@d.Id" />
+                                <div class="col-md-5">
+                                    <input type="text" name="dersAdi" value="@d.DersAdi" class="form-control form-control-sm" required />
+                                </div>
+                                <div class="col-md-2">
+                                    <input type="number" name="yariyil" value="@d.Yariyil" min="1" max="8" class="form-control form-control-sm" required />
+                                </div>
+                                <div class="col-md-2">
+                                    <input type="number" name="akts" value="@d.Akts" min="1" max="30" class="form-control form-control-sm" required />
+                                </div>
+                                <div class="col-md-2">
+                                    <select name="dersTuru" class="form-select form-select-sm">
+                                        <option value="Zorunlu" selected="@(d.DersTuru == DersTuru.Zorunlu)">Zorunlu</option>
+                                        <option value="TeknikSecmeli" selected="@(d.DersTuru == DersTuru.TeknikSecmeli)">TeknikSeçmeli</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-1">
+                                    <button type="submit" class="btn btn-outline-primary btn-sm">Kaydet</button>
+                                </div>
+                            </form>
+                        </td>
+                        <td>
+                            <span class="badge @(d.AktifMi ? "bg-success" : "bg-secondary")">
+                                @(d.AktifMi ? "Aktif" : "Pasif")
+                            </span>
+                        </td>
+                        <td class="text-end pe-3">
+                            <form method="post" asp-page-handler="AktiflikDegistir" class="d-inline">
+                                <input type="hidden" name="id" value="@d.Id" />
+                                <button type="submit" class="btn btn-sm @(d.AktifMi ? "btn-outline-danger" : "btn-outline-success")">
+                                    @(d.AktifMi ? "Pasife Al" : "Aktif Et")
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">Protokol Özel Şartları / Muafiyet Kuralları (@Model.MuafiyetKurallari.Count kural)</span>
+        <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#yeniMuafiyetPanel">
+            + Muafiyet Kuralı Tanımla
+        </button>
+    </div>
+
+    <div class="collapse border-bottom bg-light p-3" id="yeniMuafiyetPanel">
+        <form method="post" asp-page-handler="MuafiyetEkle" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Muaf Olunacak ÇAP/YDP Dersi</label>
+                <select name="capDersId" class="form-select form-select-sm" required>
+                    @foreach (var d in Model.Dersler.Where(x => x.AktifMi))
+                    {
+                        <option value="@d.Id">@d.DersKodu — @d.DersAdi</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold">Anadal Ders Kodu</label>
+                <input type="text" name="anadalDersKodu" class="form-control form-control-sm" placeholder="3302458" required />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Anadal Ders Adı</label>
+                <input type="text" name="anadalDersAdi" class="form-control form-control-sm" placeholder="Veri Yapıları" required />
+            </div>
+            <div class="col-md-4 d-flex gap-2">
+                <div class="flex-grow-1">
+                    <label class="form-label small fw-semibold">Açıklama</label>
+                    <input type="text" name="aciklama" class="form-control form-control-sm" placeholder="Protokol dipnot şartı" required />
+                </div>
+                <button type="submit" class="btn btn-dark btn-sm align-self-end">Ekle</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card-body p-0">
+        <table class="table table-sm mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-3">ÇAP / YDP Dersi</th>
+                    <th>Anadal Karşılık Dersi</th>
+                    <th class="pe-3">Protokol Şartı Açıklaması</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var m in Model.MuafiyetKurallari)
+                {
+                    <tr>
+                        <td class="ps-3"><code>@m.CapDers.DersKodu</code> — @m.CapDers.DersAdi</td>
+                        <td><code>@m.AnadalDersKodu</code> — @m.AnadalDersAdi</td>
+                        <td class="small text-muted pe-3">@m.Aciklama</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

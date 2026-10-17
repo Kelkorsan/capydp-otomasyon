@@ -1,0 +1,179 @@
+@page
+@model CapYdp.Web.Pages.Koordinator.IndexModel
+@{
+    ViewData["Title"] = "Koordinatör Gösterge Paneli";
+    var toplamBekleyen = Model.BekleyenDersKayitSayisi + Model.BekleyenNotOnaySayisi;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="mb-0">Koordinatör Gösterge Paneli</h3>
+        <span class="text-muted small">
+            Aktif Akademik Dönem:
+            <strong>@(Model.AktifDonem?.DonemAdi ?? "Tanımlı Değil")</strong>
+        </span>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-page="/Koordinator/Ogrenciler" class="btn btn-primary btn-sm">+ Yeni Öğrenci Kaydı</a>
+        <a asp-page="/Koordinator/OnayMerkezi" class="btn btn-warning btn-sm">
+            Onay Merkezi (@toplamBekleyen)
+        </a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Aktif ÇAP Öğrencisi</div>
+                <div class="display-6 fw-bold text-primary">@Model.AktifCapOgrenciSayisi</div>
+                <span class="small text-muted">Çift Anadal Programı</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Aktif YDP Öğrencisi</div>
+                <div class="display-6 fw-bold text-info">@Model.AktifYdpOgrenciSayisi</div>
+                <span class="small text-muted">Yan Dal Programı</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Bekleyen Ders Kaydı Onayı</div>
+                <div class="display-6 fw-bold text-warning">@Model.BekleyenDersKayitSayisi</div>
+                <a asp-page="/Koordinator/OnayMerkezi" class="small text-decoration-none">İncele ve Onayla &rarr;</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Bekleyen Not Girişi Onayı</div>
+                <div class="display-6 fw-bold text-danger">@Model.BekleyenNotOnaySayisi</div>
+                <a asp-page="/Koordinator/OnayMerkezi" class="small text-decoration-none">İncele ve Onayla &rarr;</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+                <span>Bu Dönem Ders Kaydı Yapmayan Aktif Öğrenciler</span>
+                <span class="badge bg-secondary">@Model.BuDonemKayitYapmayanlar.Count</span>
+            </div>
+            <div class="card-body p-0">
+                @if (Model.BuDonemKayitYapmayanlar.Count == 0)
+                {
+                    <div class="p-3 text-muted small">Tüm aktif öğrenciler bu dönem için ders kaydı oluşturmuş.</div>
+                }
+                else
+                {
+                    <table class="table table-hover table-sm mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3">Öğrenci No</th>
+                                <th>Ad Soyad</th>
+                                <th>Program</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var ogr in Model.BuDonemKayitYapmayanlar)
+                            {
+                                <tr>
+                                    <td class="ps-3"><code>@ogr.OgrenciNo</code></td>
+                                    <td>@ogr.Kullanici.AdSoyad</td>
+                                    <td><span class="badge bg-dark">@ogr.ProgramTuru</span></td>
+                                    <td class="text-end pe-3">
+                                        <a asp-page="/Koordinator/OgrenciDetay" asp-route-id="@ogr.Id" class="btn btn-outline-primary btn-sm">Kartı Aç</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+                <span>Anadal GANO Eşik Uyarıları (CAP &lt; 2.72 / YDP &lt; 2.30)</span>
+                <span class="badge bg-danger">@Model.GanoRiskliOgrenciler.Count</span>
+            </div>
+            <div class="card-body p-0">
+                @if (Model.GanoRiskliOgrenciler.Count == 0)
+                {
+                    <div class="p-3 text-muted small">Anadal GANO eşik altında olan aktif öğrenci bulunmuyor.</div>
+                }
+                else
+                {
+                    <table class="table table-hover table-sm mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3">Öğrenci No</th>
+                                <th>Ad Soyad</th>
+                                <th>Program</th>
+                                <th>Anadal GANO</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var ogr in Model.GanoRiskliOgrenciler)
+                            {
+                                <tr>
+                                    <td class="ps-3"><code>@ogr.OgrenciNo</code></td>
+                                    <td>@ogr.Kullanici.AdSoyad</td>
+                                    <td><span class="badge bg-dark">@ogr.ProgramTuru</span></td>
+                                    <td class="text-danger fw-bold">@ogr.AnadalGano?.ToString("0.00")</td>
+                                    <td class="text-end pe-3">
+                                        <a asp-page="/Koordinator/OgrenciDetay" asp-route-id="@ogr.Id" class="btn btn-outline-danger btn-sm">İncele</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mt-4">
+    <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+        <span>Son İşlem Kayıtları (Denetim İzi Özeti)</span>
+        <a asp-page="/Koordinator/IslemKayitlari" class="small text-decoration-none">Tümünü Gör &rarr;</a>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-sm table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-3">Tarih (UTC)</th>
+                    <th>İşlem Türü</th>
+                    <th>Tablo</th>
+                    <th>Kayıt ID</th>
+                    <th>Açıklama / Gerekçe</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var islem in Model.SonIslemler)
+                {
+                    <tr>
+                        <td class="ps-3 small text-muted">@islem.Tarih.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td><span class="badge bg-secondary">@islem.IslemTuru</span></td>
+                        <td><code>@islem.TabloAdi</code></td>
+                        <td>@islem.KayitId</td>
+                        <td class="small">@(islem.Aciklama ?? "-")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

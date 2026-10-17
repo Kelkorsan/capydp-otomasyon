@@ -1,0 +1,129 @@
+@inject SignInManager<Kullanici> GirisYoneticisi
+@inject UserManager<Kullanici> KullaniciYoneticisi
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - SÜ Bilgisayar Müh. ÇAP/YDP Otomasyonu</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/CapYdp.Web.styles.css" asp-append-version="true" />
+</head>
+<body class="bg-light d-flex flex-column min-vh-100">
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm mb-4">
+            <div class="container">
+                <a class="navbar-brand fw-semibold" asp-area="" asp-page="/Index">
+                    SÜ Bilgisayar Müh. · ÇAP / YDP Otomasyonu
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#anaMenu"
+                        aria-controls="anaMenu" aria-expanded="false" aria-label="Menüyü Aç/Kapat">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="anaMenu">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            if (User.IsInRole(Roller.Koordinator))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-page="/Koordinator/Index">Dashboard</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-page="/Koordinator/Ogrenciler">Öğrenci Yönetimi</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-page="/Koordinator/Dersler">Ders Kataloğu</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-page="/Koordinator/OnayMerkezi">Onay Merkezi</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-page="/Koordinator/Donemler">Dönemler</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-page="/Koordinator/IslemKayitlari">Denetim İzi</a>
+                                </li>
+                            }
+                            else if (User.IsInRole(Roller.Ogrenci))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-page="/OgrenciPaneli/Index">Durum Özeti</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-page="/OgrenciPaneli/DersGirisi">Ders Girişi</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-page="/OgrenciPaneli/NotGirisi">Not Girişi</a>
+                                </li>
+                            }
+                            else if (User.IsInRole(Roller.BolumBaskani))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-page="/BolumBaskani/Index">Öğrenci İzleme (Salt Okuma)</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-page="/BolumBaskani/IslemKayitlari">Denetim İzi</a>
+                                </li>
+                            }
+                        }
+                    </ul>
+
+                    <div class="d-flex align-items-center gap-2">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            var mevcutKullanici = await KullaniciYoneticisi.GetUserAsync(User);
+                            var rolEtiketi = User.IsInRole(Roller.Koordinator) ? "Koordinatör"
+                                           : User.IsInRole(Roller.BolumBaskani) ? "Bölüm Başkanı"
+                                           : "Öğrenci";
+                            <span class="badge bg-secondary">@rolEtiketi</span>
+                            <span class="text-light small me-2">@(mevcutKullanici?.AdSoyad ?? User.Identity.Name)</span>
+                            <form method="post" asp-page="/Hesap/Cikis" class="d-inline">
+                                <button type="submit" class="btn btn-outline-light btn-sm">Çıkış Yap</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <a class="btn btn-outline-light btn-sm" asp-page="/Hesap/Giris">Giriş Yap</a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container flex-grow-1 pb-4">
+        @if (TempData["BasariMesaji"] is string basari)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                @basari
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button>
+            </div>
+        }
+        @if (TempData["HataMesaji"] is string hata)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                @hata
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button>
+            </div>
+        }
+        <main role="main">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top bg-white py-3 text-muted mt-auto">
+        <div class="container d-flex justify-content-between small">
+            <span>&copy; 2026 Selçuk Üniversitesi Teknoloji Fakültesi — Bilgisayar Mühendisliği Bölümü</span>
+            <span>Çift Anadal (ÇAP) ve Yan Dal (YDP) Takip Otomasyonu · MVP</span>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

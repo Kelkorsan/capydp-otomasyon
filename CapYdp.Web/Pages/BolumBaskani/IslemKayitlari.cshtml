@@ -1,0 +1,46 @@
+@page
+@model CapYdp.Web.Pages.BolumBaskani.IslemKayitlariModel
+@{
+    ViewData["Title"] = "Denetim İzi (Salt Okuma)";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="mb-0">İşlem Kaydı (Denetim İzi) <span class="badge bg-secondary fs-6">Salt Okuma</span></h3>
+        <span class="text-muted small">Sistemdeki tüm işlemlerin değiştirilemez kronolojik kaydı.</span>
+    </div>
+    <a asp-page="/BolumBaskani/Index" class="btn btn-outline-secondary btn-sm">&larr; Öğrenci Listesi</a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <table class="table table-sm table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-3">#</th>
+                    <th>Tarih (UTC)</th>
+                    <th>Kullanıcı</th>
+                    <th>Tür</th>
+                    <th>Tablo / Kayıt</th>
+                    <th class="pe-3">Açıklama / Gerekçe</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var k in Model.Kayitlar)
+                {
+                    var ad = k.KullaniciId.HasValue && Model.KullaniciAdlari.TryGetValue(k.KullaniciId.Value, out var u)
+                        ? u
+                        : "Sistem";
+                    <tr>
+                        <td class="ps-3 small text-muted">@k.Id</td>
+                        <td class="small text-muted">@k.Tarih.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                        <td class="small">@ad</td>
+                        <td><span class="badge bg-secondary">@k.IslemTuru</span></td>
+                        <td><code>@k.TabloAdi #@k.KayitId</code></td>
+                        <td class="small pe-3">@(k.Aciklama ?? "-")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

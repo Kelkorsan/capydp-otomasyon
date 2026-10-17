@@ -1,0 +1,96 @@
+@page
+@model CapYdp.Web.Pages.OgrenciPaneli.NotGirisiModel
+@{
+    ViewData["Title"] = "Dönem Sonu Not Girişi";
+}
+
+<div class="mb-3">
+    <h3 class="mb-0">Dönem Sonu Not Girişi</h3>
+    <span class="text-muted small">
+        Yalnızca ders kaydı koordinatör tarafından onaylanmış dersler için not girilebilir. Girilen notlar <em>"Onay Bekliyor"</em> durumunda başlar ve onaylandığında kilitlenir.
+    </span>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white fw-semibold">Ders Kaydı Onaylanmış Derslerim</div>
+    <div class="card-body p-0">
+        @if (Model.OnayliDersKayitlari.Count == 0)
+        {
+            <div class="p-3 text-muted small">Not girilebilecek onaylı ders kaydınız bulunmuyor.</div>
+        }
+        else
+        {
+            <table class="table table-sm table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">Dönem</th>
+                        <th>Ders Kodu</th>
+                        <th>Ders Adı</th>
+                        <th>AKTS</th>
+                        <th>Mevcut Not</th>
+                        <th>Not Onay Durumu</th>
+                        <th class="text-end pe-3">Not Girişi / Güncelleme</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var k in Model.OnayliDersKayitlari)
+                    {
+                        <tr>
+                            <td class="ps-3 small">@k.Donem.DonemAdi</td>
+                            <td><code>@k.Ders.DersKodu</code></td>
+                            <td>@k.Ders.DersAdi</td>
+                            <td>@k.Ders.Akts</td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(k.HarfNotu))
+                                {
+                                    <strong>@k.HarfNotu</strong> <span class="text-muted small">(@k.PuanNotu)</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">Girilmedi</span>
+                                }
+                            </td>
+                            <td>
+                                @if (k.NotOnayDurumu.HasValue)
+                                {
+                                    <span class="badge @(k.NotOnayDurumu == OnayDurumu.Onaylandi ? "bg-success" : k.NotOnayDurumu == OnayDurumu.Bekliyor ? "bg-warning text-dark" : "bg-danger")">
+                                        @k.NotOnayDurumu
+                                    </span>
+                                    @if (!string.IsNullOrEmpty(k.NotRedGerekce))
+                                    {
+                                        <div class="small text-danger">Red gerekçesi: @k.NotRedGerekce</div>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">-</span>
+                                }
+                            </td>
+                            <td class="text-end pe-3">
+                                @if (k.NotOnayDurumu == OnayDurumu.Onaylandi)
+                                {
+                                    <span class="text-muted small">🔒 Onaylandı (Kilitli)</span>
+                                }
+                                else
+                                {
+                                    <form method="post" asp-page-handler="NotGir" class="d-inline-flex gap-1 align-items-center">
+                                        <input type="hidden" name="kayitId" value="@k.Id" />
+                                        <select name="harfNotu" class="form-select form-select-sm" style="width: 85px;">
+                                            @foreach (var h in NotGirisiModel.GecerliHarfNotlari)
+                                            {
+                                                <option value="@h" selected="@(k.HarfNotu == h)">@h</option>
+                                            }
+                                        </select>
+                                        <input type="number" name="puanNotu" value="@k.PuanNotu" step="0.01" min="0" max="100"
+                                               class="form-control form-control-sm" style="width: 85px;" placeholder="Puan" required />
+                                        <button type="submit" class="btn btn-primary btn-sm">Onaya Gönder</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>

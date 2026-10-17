@@ -1,0 +1,181 @@
+@page
+@model CapYdp.Web.Pages.Koordinator.OgrencilerModel
+@{
+    ViewData["Title"] = "Öğrenci Yönetimi";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Öğrenci Yönetimi (ÇAP / YDP)</h3>
+    <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#yeniOgrenciFormu">
+        + Yeni Öğrenci Ekle ve Hesap Aç
+    </button>
+</div>
+
+<div class="collapse mb-4" id="yeniOgrenciFormu">
+    <div class="card border-primary shadow-sm">
+        <div class="card-header bg-primary text-white fw-semibold">
+            Dekanlık Kabulü Gelen Öğrenciyi Sisteme Kaydet
+        </div>
+        <div class="card-body">
+            <form method="post" asp-page-handler="Ekle">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label small fw-semibold">Öğrenci Numarası (ÇAP/YDP)</label>
+                        <input asp-for="YeniOgrenci.OgrenciNo" class="form-control form-control-sm" placeholder="Örn: 243301012" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-semibold">Ad</label>
+                        <input asp-for="YeniOgrenci.Ad" class="form-control form-control-sm" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-semibold">Soyad</label>
+                        <input asp-for="YeniOgrenci.Soyad" class="form-control form-control-sm" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-semibold">Program Türü</label>
+                        <select asp-for="YeniOgrenci.ProgramTuru" class="form-select form-select-sm"
+                                asp-items="Html.GetEnumSelectList<ProgramTuru>()"></select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">Okul E-Posta Adresi (Giriş Hesabı)</label>
+                        <input asp-for="YeniOgrenci.Email" type="email" class="form-control form-control-sm" placeholder="ad.soyad@ogr.selcuk.edu.tr" required />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">Başlangıç Şifresi</label>
+                        <input asp-for="YeniOgrenci.BaslangicSifresi" class="form-control form-control-sm" required />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">Kabul Dönemi</label>
+                        <select asp-for="YeniOgrenci.KabulDonemiId" class="form-select form-select-sm">
+                            @foreach (var d in Model.Donemler)
+                            {
+                                <option value="@d.Id">@d.DonemAdi</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">Anadal Fakültesi</label>
+                        <input asp-for="YeniOgrenci.AnadalFakulte" class="form-control form-control-sm" required />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">Anadal Bölümü</label>
+                        <input asp-for="YeniOgrenci.AnadalBolum" class="form-control form-control-sm" required />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-semibold">Anadal GANO (Opsiyonel)</label>
+                        <input asp-for="YeniOgrenci.AnadalGano" type="number" step="0.01" min="0" max="4" class="form-control form-control-sm" placeholder="3.15" />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-semibold">GANO Kaynağı</label>
+                        <input asp-for="YeniOgrenci.GanoKaynagi" class="form-control form-control-sm" placeholder="Kabul Transkripti" />
+                    </div>
+
+                    <div class="col-12 d-flex justify-content-between align-items-center mt-2">
+                        <div class="form-check">
+                            <input asp-for="YeniOgrenci.ProtokolZorunluDersleriniAta" class="form-check-input" />
+                            <label asp-for="YeniOgrenci.ProtokolZorunluDersleriniAta" class="form-check-label small">
+                                ÇAP ise bölüm protokolündeki zorunlu dersleri öğrencinin ders listesine otomatik ata
+                            </label>
+                        </div>
+                        <button type="submit" class="btn btn-success btn-sm px-4">Öğrenciyi Kaydet ve Hesabı Aç</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-3">
+                <select name="FiltreProgram" class="form-select form-select-sm">
+                    <option value="">Tüm Programlar (ÇAP + YDP)</option>
+                    <option value="CAP" selected="@(Model.FiltreProgram == ProgramTuru.CAP)">Çift Anadal (ÇAP)</option>
+                    <option value="YDP" selected="@(Model.FiltreProgram == ProgramTuru.YDP)">Yan Dal (YDP)</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="FiltreDurum" class="form-select form-select-sm">
+                    <option value="">Tüm Durumlar</option>
+                    @foreach (var durum in Enum.GetValues<OgrenciDurumu>())
+                    {
+                        <option value="@durum" selected="@(Model.FiltreDurum == durum)">@durum</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="FiltreDonemId" class="form-select form-select-sm">
+                    <option value="">Tüm Kabul Dönemleri</option>
+                    @foreach (var d in Model.Donemler)
+                    {
+                        <option value="@d.Id" selected="@(Model.FiltreDonemId == d.Id)">@d.DonemAdi</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-dark btn-sm">Filtrele</button>
+                <a asp-page="/Koordinator/Ogrenciler" class="btn btn-outline-secondary btn-sm">Sıfırla</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-3">Öğrenci No</th>
+                    <th>Ad Soyad</th>
+                    <th>E-Posta</th>
+                    <th>Program</th>
+                    <th>Anadal Bölümü</th>
+                    <th>Kabul Dönemi</th>
+                    <th>Anadal GANO</th>
+                    <th>Durum</th>
+                    <th class="text-end pe-3">İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var o in Model.Ogrenciler)
+                {
+                    var durumRenk = o.Durum switch
+                    {
+                        OgrenciDurumu.Aktif => "bg-success",
+                        OgrenciDurumu.Dondurulmus => "bg-warning text-dark",
+                        OgrenciDurumu.Cikarilmis => "bg-danger",
+                        OgrenciDurumu.Mezun => "bg-primary",
+                        _ => "bg-secondary"
+                    };
+                    <tr>
+                        <td class="ps-3"><code>@o.OgrenciNo</code></td>
+                        <td class="fw-semibold">@o.Kullanici.AdSoyad</td>
+                        <td class="small text-muted">@o.Kullanici.Email</td>
+                        <td><span class="badge bg-dark">@o.ProgramTuru</span></td>
+                        <td class="small">@o.AnadalBolum</td>
+                        <td class="small">@o.KabulDonemi.DonemAdi</td>
+                        <td>
+                            @if (o.AnadalGano.HasValue)
+                            {
+                                <span class="fw-semibold">@o.AnadalGano.Value.ToString("0.00")</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">-</span>
+                            }
+                        </td>
+                        <td><span class="badge @durumRenk">@o.Durum</span></td>
+                        <td class="text-end pe-3">
+                            <a asp-page="/Koordinator/OgrenciDetay" asp-route-id="@o.Id" class="btn btn-outline-primary btn-sm">
+                                Öğrenci Kartı &rarr;
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

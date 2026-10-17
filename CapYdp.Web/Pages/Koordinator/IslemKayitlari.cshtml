@@ -1,0 +1,87 @@
+@page
+@model CapYdp.Web.Pages.Koordinator.IslemKayitlariModel
+@{
+    ViewData["Title"] = "Denetim İzi (İşlem Kaydı)";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="mb-0">İşlem Kaydı — Denetim İzi (Audit Trail)</h3>
+        <span class="text-muted small">
+            Sistemde yapılan her değişiklik <code>SaveChangesAsync</code> katmanında yakalanır ve değiştirilemez/silinemez olarak saklanır.
+        </span>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <select name="TabloAdi" class="form-select form-select-sm">
+                    <option value="">Tüm Tablolar</option>
+                    @foreach (var t in new[] { "Ogrenci", "Ders", "MuafiyetKurali", "AkademikDonem", "OgrenciDersListesi", "DersKayit" })
+                    {
+                        <option value="@t" selected="@(Model.TabloAdi == t)">@t</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <select name="IslemTuru" class="form-select form-select-sm">
+                    <option value="">Tüm İşlem Türleri</option>
+                    @foreach (var it in new[] { "Ekleme", "Guncelleme", "Onay", "Red", "Iptal" })
+                    {
+                        <option value="@it" selected="@(Model.IslemTuru == it)">@it</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4 d-flex gap-2">
+                <button type="submit" class="btn btn-dark btn-sm">Filtrele</button>
+                <a asp-page="/Koordinator/IslemKayitlari" class="btn btn-outline-secondary btn-sm">Sıfırla</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <table class="table table-sm table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-3">#</th>
+                    <th>Tarih (UTC)</th>
+                    <th>Kullanıcı</th>
+                    <th>Tür</th>
+                    <th>Tablo / Kayıt</th>
+                    <th>Açıklama / Gerekçe</th>
+                    <th class="pe-3">Değişiklik Özeti (JSON)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var k in Model.Kayitlar)
+                {
+                    var kullaniciAdi = k.KullaniciId.HasValue && Model.KullaniciAdlari.TryGetValue(k.KullaniciId.Value, out var ad)
+                        ? ad
+                        : "Sistem (Başlangıç Tohumlama)";
+                    <tr>
+                        <td class="ps-3 small text-muted">@k.Id</td>
+                        <td class="small text-muted">@k.Tarih.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                        <td class="small">@kullaniciAdi</td>
+                        <td><span class="badge bg-secondary">@k.IslemTuru</span></td>
+                        <td><code>@k.TabloAdi #@k.KayitId</code></td>
+                        <td class="small">@(k.Aciklama ?? "-")</td>
+                        <td class="small pe-3" style="max-width: 340px;">
+                            @if (!string.IsNullOrEmpty(k.EskiDeger))
+                            {
+                                <div class="text-danger text-truncate" title="@k.EskiDeger"><strong>Eski:</strong> <code>@k.EskiDeger</code></div>
+                            }
+                            @if (!string.IsNullOrEmpty(k.YeniDeger))
+                            {
+                                <div class="text-success text-truncate" title="@k.YeniDeger"><strong>Yeni:</strong> <code>@k.YeniDeger</code></div>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

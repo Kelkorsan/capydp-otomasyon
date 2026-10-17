@@ -1,0 +1,142 @@
+@page
+@model CapYdp.Web.Pages.OgrenciPaneli.DersGirisiModel
+@{
+    ViewData["Title"] = "Dönemlik Ders Girişi";
+    var secilenAkts = Model.BuDonemKayitlari
+        .Where(k => k.KayitOnayDurumu is OnayDurumu.Bekliyor or OnayDurumu.Onaylandi)
+        .Sum(k => k.Ders.Akts);
+    var protokolDersIdleri = Model.Ogrenci.DersListesi
+        .Where(dl => dl.Durum == DersListesiDurumu.Aktif)
+        .Select(dl => dl.DersId)
+        .ToHashSet();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="mb-0">Dönemlik Ders Girişi</h3>
+        <span class="text-muted small">
+            Aktif Dönem: <strong>@(Model.AktifDonem?.DonemAdi ?? "Tanımlı Değil")</strong> ·
+            Seçimler <em>"Onay Bekliyor"</em> olarak başlar, koordinatör onayladığında kilitlenir.
+        </span>
+    </div>
+    <span class="badge bg-primary fs-6">Bu Dönem Seçilen Toplam: @secilenAkts AKTS</span>
+</div>
+
+<!-- Bu Dönem Seçilen Dersler -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white fw-semibold">
+        @(Model.AktifDonem?.DonemAdi) Dönemi Seçtiğim Dersler
+    </div>
+    <div class="card-body p-0">
+        @if (Model.BuDonemKayitlari.Count == 0)
+        {
+            <div class="p-3 text-muted small">Bu dönem için henüz ders seçimi yapmadınız. Aşağıdaki katalogdan ders seçebilirsiniz.</div>
+        }
+        else
+        {
+            <table class="table table-sm table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">Ders Kodu</th>
+                        <th>Ders Adı</th>
+                        <th>Yarıyıl</th>
+                        <th>AKTS</th>
+                        <th>Deneme</th>
+                        <th>Onay Durumu</th>
+                        <th class="text-end pe-3">İşlem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var k in Model.BuDonemKayitlari)
+                    {
+                        <tr>
+                            <td class="ps-3"><code>@k.Ders.DersKodu</code></td>
+                            <td>@k.Ders.DersAdi</td>
+                            <td>@k.Ders.Yariyil. Yarıyıl</td>
+                            <td>@k.Ders.Akts</td>
+                            <td>@k.DenemeSayisi.</td>
+                            <td>
+                                <span class="badge @(k.KayitOnayDurumu == OnayDurumu.Onaylandi ? "bg-success" : k.KayitOnayDurumu == OnayDurumu.Bekliyor ? "bg-warning text-dark" : "bg-danger")">
+                                    @k.KayitOnayDurumu
+                                </span>
+                                @if (!string.IsNullOrEmpty(k.KayitRedGerekce))
+                                {
+                                    <div class="small text-danger">@k.KayitRedGerekce</div>
+                                }
+                            </td>
+                            <td class="text-end pe-3">
+                                @if (!k.KayitKilitliMi)
+                                {
+                                    <form method="post" asp-page-handler="GeriCek" class="d-inline">
+                                        <input type="hidden" name="kayitId" value="@k.Id" />
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">Seçimi Geri Çek</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">🔒 Kilitli</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+<!-- Ders Kataloğundan Seçim -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">Bölüm Ders Kataloğundan Seçim (Serbest Metinle Ders Girilemez)</span>
+        <form method="get" class="d-flex gap-2">
+            <input type="text" name="Arama" value="@Model.Arama" class="form-control form-control-sm"
+                   placeholder="Ders kodu veya adı ara..." />
+            <button type="submit" class="btn btn-dark btn-sm">Ara</button>
+        </form>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-sm table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-3">Ders Kodu</th>
+                    <th>Ders Adı</th>
+                    <th>Yarıyıl</th>
+                    <th>AKTS</th>
+                    <th>Tür</th>
+                    <th>Protokol Durumu</th>
+                    <th class="text-end pe-3">Seç</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var d in Model.SecilebilirDersler)
+                {
+                    var protokoldeVar = protokolDersIdleri.Contains(d.Id);
+                    <tr>
+                        <td class="ps-3"><code>@d.DersKodu</code></td>
+                        <td>@d.DersAdi</td>
+                        <td>@d.Yariyil. Yarıyıl</td>
+                        <td>@d.Akts</td>
+                        <td class="small">@d.DersTuru</td>
+                        <td>
+                            @if (protokoldeVar)
+                            {
+                                <span class="badge bg-primary">Protokol Dersim</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Genel Katalog</span>
+                            }
+                        </td>
+                        <td class="text-end pe-3">
+                            <form method="post" asp-page-handler="Sec" class="d-inline">
+                                <input type="hidden" name="dersId" value="@d.Id" />
+                                <button type="submit" class="btn btn-outline-primary btn-sm">Onaya Gönder</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

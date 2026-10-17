@@ -1,0 +1,81 @@
+@page "{id:int}"
+@model CapYdp.Web.Pages.BolumBaskani.OgrenciDetayModel
+@{
+    ViewData["Title"] = $"Öğrenci Detay (Salt Okuma) — {Model.Ogrenci.Kullanici.AdSoyad}";
+}
+
+<div class="mb-3">
+    <a asp-page="/BolumBaskani/Index" class="text-decoration-none small">&larr; Öğrenci Listesine Dön</a>
+    <h3 class="mb-0 mt-1">
+        @Model.Ogrenci.Kullanici.AdSoyad
+        <span class="badge bg-dark fs-6">@Model.Ogrenci.ProgramTuru</span>
+        <span class="badge bg-secondary fs-6">Salt Okuma</span>
+    </h3>
+    <span class="text-muted small">
+        Öğrenci No: <code>@Model.Ogrenci.OgrenciNo</code> · Anadal: @Model.Ogrenci.AnadalBolum · Anadal GANO: <strong>@(Model.Ogrenci.AnadalGano?.ToString("0.00") ?? "-")</strong> (@(Model.Ogrenci.GanoKaynagi ?? "-"))
+    </span>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white fw-semibold">Protokol Ders Listesi</div>
+    <div class="card-body p-0">
+        <table class="table table-sm mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-3">Ders Kodu</th>
+                    <th>Ders Adı</th>
+                    <th>Yarıyıl</th>
+                    <th>AKTS</th>
+                    <th>Durum</th>
+                    <th class="pe-3">Gerekçe</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var dl in Model.Ogrenci.DersListesi)
+                {
+                    <tr>
+                        <td class="ps-3"><code>@dl.Ders.DersKodu</code></td>
+                        <td>@dl.Ders.DersAdi</td>
+                        <td>@dl.Ders.Yariyil</td>
+                        <td>@dl.Ders.Akts</td>
+                        <td><span class="badge bg-secondary">@dl.Durum</span></td>
+                        <td class="small text-muted pe-3">@(dl.DegisiklikGerekce ?? "-")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white fw-semibold">Dönemlik Ders ve Not Kayıtları</div>
+    <div class="card-body p-0">
+        <table class="table table-sm mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-3">Dönem</th>
+                    <th>Ders</th>
+                    <th>Deneme</th>
+                    <th>Kayıt Onayı</th>
+                    <th>Not</th>
+                    <th>Not Onayı</th>
+                    <th class="pe-3">Durum</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var dk in Model.Ogrenci.DersKayitlari)
+                {
+                    <tr>
+                        <td class="ps-3 small">@dk.Donem.DonemAdi</td>
+                        <td><code>@dk.Ders.DersKodu</code> — @dk.Ders.DersAdi</td>
+                        <td>@dk.DenemeSayisi.</td>
+                        <td><span class="badge bg-secondary">@dk.KayitOnayDurumu</span></td>
+                        <td>@(dk.HarfNotu ?? "-") (@(dk.PuanNotu?.ToString() ?? "-"))</td>
+                        <td><span class="badge bg-secondary">@(dk.NotOnayDurumu?.ToString() ?? "-")</span></td>
+                        <td class="pe-3"><span class="badge bg-dark">@dk.DersDurumu</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

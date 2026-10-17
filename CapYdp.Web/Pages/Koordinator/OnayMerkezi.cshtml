@@ -1,0 +1,220 @@
+@page
+@model CapYdp.Web.Pages.Koordinator.OnayMerkeziModel
+@{
+    ViewData["Title"] = "Onay Merkezi";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="mb-0">Onay Merkezi</h3>
+        <span class="text-muted small">
+            Yalnızca onaylanmış kayıtlar kural hesaplarına dahil edilir ve öğrenci tarafında kilitlenir. Reddedilen veya iptal edilen kayıtlar silinmez.
+        </span>
+    </div>
+    @if (Model.BekleyenDersKayitlari.Count > 0)
+    {
+        <form method="post" asp-page-handler="TumDersKayitlariniOnayla">
+            <button type="submit" class="btn btn-success btn-sm">
+                Bekleyen Tüm Ders Kayıtlarını Onayla (@Model.BekleyenDersKayitlari.Count)
+            </button>
+        </form>
+    }
+</div>
+
+<!-- 1) Bekleyen Ders Kaydı Onayları -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-warning bg-opacity-25 fw-semibold d-flex justify-content-between align-items-center">
+        <span>1. Onay Bekleyen Dönemlik Ders Kayıtları</span>
+        <span class="badge bg-dark">@Model.BekleyenDersKayitlari.Count bekleyen</span>
+    </div>
+    <div class="card-body p-0">
+        @if (Model.BekleyenDersKayitlari.Count == 0)
+        {
+            <div class="p-3 text-muted small">Onay bekleyen dönemlik ders kaydı bulunmuyor.</div>
+        }
+        else
+        {
+            <table class="table table-sm table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">Öğrenci</th>
+                        <th>Program</th>
+                        <th>Dönem</th>
+                        <th>Ders</th>
+                        <th>AKTS</th>
+                        <th>Deneme</th>
+                        <th class="text-end pe-3">Onay / Gerekçeli Red</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var k in Model.BekleyenDersKayitlari)
+                    {
+                        <tr>
+                            <td class="ps-3">
+                                <a asp-page="/Koordinator/OgrenciDetay" asp-route-id="@k.OgrenciId" class="text-decoration-none fw-semibold">
+                                    @k.Ogrenci.Kullanici.AdSoyad
+                                </a>
+                                <div class="small text-muted"><code>@k.Ogrenci.OgrenciNo</code></div>
+                            </td>
+                            <td><span class="badge bg-dark">@k.Ogrenci.ProgramTuru</span></td>
+                            <td class="small">@k.Donem.DonemAdi</td>
+                            <td><code>@k.Ders.DersKodu</code> — @k.Ders.DersAdi</td>
+                            <td>@k.Ders.Akts</td>
+                            <td>@k.DenemeSayisi.</td>
+                            <td class="text-end pe-3">
+                                <div class="d-inline-flex gap-2 align-items-center">
+                                    <form method="post" asp-page-handler="DersKaydiOnayla" class="d-inline">
+                                        <input type="hidden" name="id" value="@k.Id" />
+                                        <button type="submit" class="btn btn-success btn-sm">Onayla</button>
+                                    </form>
+                                    <form method="post" asp-page-handler="DersKaydiReddet" class="d-inline-flex gap-1">
+                                        <input type="hidden" name="id" value="@k.Id" />
+                                        <input type="text" name="redGerekce" class="form-control form-control-sm" style="width: 170px;"
+                                               placeholder="Red gerekçesi (Zorunlu)" required />
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">Reddet</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+<!-- 2) Bekleyen Not Girişi Onayları -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-info bg-opacity-25 fw-semibold d-flex justify-content-between align-items-center">
+        <span>2. Onay Bekleyen Dönem Sonu Not Girişleri</span>
+        <span class="badge bg-dark">@Model.BekleyenNotKayitlari.Count bekleyen</span>
+    </div>
+    <div class="card-body p-0">
+        @if (Model.BekleyenNotKayitlari.Count == 0)
+        {
+            <div class="p-3 text-muted small">Onay bekleyen not girişi bulunmuyor.</div>
+        }
+        else
+        {
+            <table class="table table-sm table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">Öğrenci</th>
+                        <th>Dönem</th>
+                        <th>Ders</th>
+                        <th>Girilen Harf Notu</th>
+                        <th>100'lük Puan</th>
+                        <th class="text-end pe-3">Onay / Gerekçeli Red</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var k in Model.BekleyenNotKayitlari)
+                    {
+                        <tr>
+                            <td class="ps-3">
+                                <a asp-page="/Koordinator/OgrenciDetay" asp-route-id="@k.OgrenciId" class="text-decoration-none fw-semibold">
+                                    @k.Ogrenci.Kullanici.AdSoyad
+                                </a>
+                                <div class="small text-muted"><code>@k.Ogrenci.OgrenciNo</code></div>
+                            </td>
+                            <td class="small">@k.Donem.DonemAdi</td>
+                            <td><code>@k.Ders.DersKodu</code> — @k.Ders.DersAdi</td>
+                            <td><span class="badge bg-primary fs-6">@k.HarfNotu</span></td>
+                            <td class="fw-semibold">@k.PuanNotu</td>
+                            <td class="text-end pe-3">
+                                <div class="d-inline-flex gap-2 align-items-center">
+                                    <form method="post" asp-page-handler="NotOnayla" class="d-inline">
+                                        <input type="hidden" name="id" value="@k.Id" />
+                                        <button type="submit" class="btn btn-success btn-sm">Notu Onayla</button>
+                                    </form>
+                                    <form method="post" asp-page-handler="NotReddet" class="d-inline-flex gap-1">
+                                        <input type="hidden" name="id" value="@k.Id" />
+                                        <input type="text" name="redGerekce" class="form-control form-control-sm" style="width: 170px;"
+                                               placeholder="Red gerekçesi (Zorunlu)" required />
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">Reddet</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+<!-- 3) Onaylanmış / İşlenmiş Kayıtlar (Gerekçeli Düzeltme ve İptal) -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white fw-semibold">
+        Son İşlenen Kayıtlar — Koordinatör Gerekçeli Düzeltme / İptal (Rapor Bölüm 7.1)
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-sm table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-3">Öğrenci</th>
+                    <th>Dönem / Ders</th>
+                    <th>Kayıt Durumu</th>
+                    <th>Not / Durum</th>
+                    <th class="text-end pe-3">Gerekçeli Düzeltme / İptal</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var k in Model.SonIslenenKayitlar)
+                {
+                    <tr>
+                        <td class="ps-3 small">
+                            <strong>@k.Ogrenci.Kullanici.AdSoyad</strong>
+                            <div class="text-muted"><code>@k.Ogrenci.OgrenciNo</code></div>
+                        </td>
+                        <td class="small">
+                            <div>@k.Donem.DonemAdi</div>
+                            <code>@k.Ders.DersKodu</code> — @k.Ders.DersAdi
+                        </td>
+                        <td>
+                            <span class="badge @(k.KayitOnayDurumu == OnayDurumu.Onaylandi ? "bg-success" : "bg-danger")">
+                                @k.KayitOnayDurumu
+                            </span>
+                            @if (!string.IsNullOrEmpty(k.KayitRedGerekce))
+                            {
+                                <div class="small text-danger">@k.KayitRedGerekce</div>
+                            }
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(k.HarfNotu))
+                            {
+                                <strong>@k.HarfNotu (@k.PuanNotu)</strong>
+                                <span class="badge bg-secondary ms-1">@k.NotOnayDurumu</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">Not yok</span>
+                            }
+                        </td>
+                        <td class="text-end pe-3">
+                            <form method="post" asp-page-handler="OnayliDuzelt" class="d-inline-flex gap-1 align-items-center">
+                                <input type="hidden" name="id" value="@k.Id" />
+                                <input type="text" name="yeniHarfNotu" value="@k.HarfNotu" maxlength="2"
+                                       class="form-control form-control-sm" style="width: 55px;" placeholder="AA" required />
+                                <input type="number" name="yeniPuanNotu" value="@k.PuanNotu" step="0.01" min="0" max="100"
+                                       class="form-control form-control-sm" style="width: 75px;" placeholder="90" required />
+                                <input type="text" name="gerekce" class="form-control form-control-sm" style="width: 140px;"
+                                       placeholder="Düzeltme gerekçesi" required />
+                                <button type="submit" class="btn btn-outline-primary btn-sm">Düzelt</button>
+                            </form>
+                            @if (k.KayitOnayDurumu == OnayDurumu.Onaylandi)
+                            {
+                                <form method="post" asp-page-handler="OnayliIptal" class="d-inline-flex gap-1 align-items-center ms-1">
+                                    <input type="hidden" name="id" value="@k.Id" />
+                                    <input type="text" name="gerekce" class="form-control form-control-sm" style="width: 120px;"
+                                           placeholder="İptal gerekçesi" required />
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">İptal Et</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,83 @@
+@page
+@model CapYdp.Web.Pages.Koordinator.DonemlerModel
+@{
+    ViewData["Title"] = "Akademik Dönemler";
+}
+
+<h3 class="mb-3">Akademik Dönem Yönetimi</h3>
+
+<div class="row g-4">
+    <div class="col-md-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-semibold">Yeni Akademik Dönem Tanımla</div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="Ekle" class="row g-2">
+                    <div class="col-6">
+                        <label class="form-label small fw-semibold">Başlangıç Yılı</label>
+                        <input type="number" name="yil" value="2026" min="2020" max="2035" class="form-control form-control-sm" required />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small fw-semibold">Dönem Tipi</label>
+                        <select name="donemTipi" class="form-select form-select-sm">
+                            <option value="Guz">Güz</option>
+                            <option value="Bahar">Bahar</option>
+                        </select>
+                    </div>
+                    <div class="col-12 mt-2">
+                        <div class="form-check">
+                            <input type="checkbox" name="aktifYap" value="true" class="form-check-input" id="aktifCheck" />
+                            <label for="aktifCheck" class="form-check-label small">Oluşturulduğunda aktif dönem yap</label>
+                        </div>
+                    </div>
+                    <div class="col-12 mt-2">
+                        <button type="submit" class="btn btn-primary btn-sm w-100">Dönemi Ekle</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-semibold">Kayıtlı Akademik Dönemler</div>
+            <div class="card-body p-0">
+                <table class="table table-sm table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">Dönem Adı</th>
+                            <th>Durum</th>
+                            <th class="text-end pe-3">İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var d in Model.Donemler)
+                        {
+                            <tr>
+                                <td class="ps-3 fw-semibold">@d.DonemAdi</td>
+                                <td>
+                                    @if (d.AktifMi)
+                                    {
+                                        <span class="badge bg-success">Aktif Dönem</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Geçmiş / Pasif</span>
+                                    }
+                                </td>
+                                <td class="text-end pe-3">
+                                    @if (!d.AktifMi)
+                                    {
+                                        <form method="post" asp-page-handler="AktifYap" class="d-inline">
+                                            <input type="hidden" name="id" value="@d.Id" />
+                                            <button type="submit" class="btn btn-outline-success btn-sm">Aktif Dönem Yap</button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
