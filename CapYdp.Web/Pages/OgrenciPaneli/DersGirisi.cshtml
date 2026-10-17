@@ -2,13 +2,14 @@
 @model CapYdp.Web.Pages.OgrenciPaneli.DersGirisiModel
 @{
     ViewData["Title"] = "Dönemlik Ders Girişi";
-    var secilenAkts = Model.BuDonemKayitlari
+    var aktifSecimler = Model.BuDonemKayitlari
         .Where(k => k.KayitOnayDurumu is OnayDurumu.Bekliyor or OnayDurumu.Onaylandi)
-        .Sum(k => k.Ders.Akts);
-    var protokolDersIdleri = Model.Ogrenci.DersListesi
-        .Where(dl => dl.Durum == DersListesiDurumu.Aktif)
-        .Select(dl => dl.DersId)
-        .ToHashSet();
+        .ToList();
+    var secilenAkts = aktifSecimler.Sum(k => k.Ders.Akts);
+    var secilenDersSayisi = aktifSecimler.Count;
+    var protokolDersIdleri = Model.ProtokolDerslerim.Select(dl => dl.DersId).ToHashSet();
+    var asiriYukUyarisiVar = secilenAkts > DersGirisiModel.VarsayilanDonemMaxAkts
+                             || secilenDersSayisi > DersGirisiModel.VarsayilanDonemMaxDersSayisi;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -19,18 +20,33 @@
             Seçimler <em>"Onay Bekliyor"</em> olarak başlar, koordinatör onayladığında kilitlenir.
         </span>
     </div>
-    <span class="badge bg-primary fs-6">Bu Dönem Seçilen Toplam: @secilenAkts AKTS</span>
+    <div class="text-end">
+        <span class="badge @(asiriYukUyarisiVar ? "bg-warning text-dark" : "bg-primary") fs-6">
+            Bu Dönem Seçilen: @secilenAkts AKTS (@secilenDersSayisi Ders)
+        </span>
+        <div class="small text-muted">Standart dönemlik üst sınır: @DersGirisiModel.VarsayilanDonemMaxAkts AKTS / @DersGirisiModel.VarsayilanDonemMaxDersSayisi ders</div>
+    </div>
 </div>
 
-<!-- Bu Dönem Seçilen Dersler -->
+@if (asiriYukUyarisiVar)
+{
+    <div class="alert alert-warning border-warning shadow-sm mb-4">
+        <strong>⚠️ Dönemlik Kredi / Ders Yükü Uyarısı (Rapor Bölüm 8.1):</strong>
+        Bu dönem için toplam <strong>@secilenAkts AKTS (@secilenDersSayisi ders)</strong> seçtiniz.
+        Standart dönemlik üst sınır <strong>@DersGirisiModel.VarsayilanDonemMaxAkts AKTS / @DersGirisiModel.VarsayilanDonemMaxDersSayisi ders</strong>'tir.
+        <em>Sistem seçiminizi engellemez ancak Koordinatör Onay Merkezi'nde aşırı yük uyarısıyla değerlendirilecektir.</em>
+    </div>
+}
+
+<!-- 1) Bu Dönem Seçilen Dersler -->
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-header bg-white fw-semibold">
-        @(Model.AktifDonem?.DonemAdi) Dönemi Seçtiğim Dersler
+        1. @(Model.AktifDonem?.DonemAdi) Dönemi Seçtiğim Dersler
     </div>
     <div class="card-body p-0">
         @if (Model.BuDonemKayitlari.Count == 0)
         {
-            <div class="p-3 text-muted small">Bu dönem için henüz ders seçimi yapmadınız. Aşağıdaki katalogdan ders seçebilirsiniz.</div>
+            <div class="p-3 text-muted small">Bu dönem için henüz ders seçimi yapmadınız. Aşağıdaki protokol listenizden ders seçebilirsiniz.</div>
         }
         else
         {
@@ -41,6 +57,7 @@
                         <th>Ders Adı</th>
                         <th>Yarıyıl</th>
                         <th>AKTS</th>
+                        <th>Kaynak</th>
                         <th>Deneme</th>
                         <th>Onay Durumu</th>
                         <th class="text-end pe-3">İşlem</th>
@@ -49,11 +66,22 @@
                 <tbody>
                     @foreach (var k in Model.BuDonemKayitlari)
                     {
+                        var protokolde = protokolDersIdleri.Contains(k.DersId);
                         <tr>
                             <td class="ps-3"><code>@k.Ders.DersKodu</code></td>
                             <td>@k.Ders.DersAdi</td>
                             <td>@k.Ders.Yariyil. Yarıyıl</td>
                             <td>@k.Ders.Akts</td>
+                            <td>
+                                @if (protokolde)
+                                {
+                                    <span class="badge bg-primary">Protokol Dersim</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-info text-dark">Teknik Seçmeli / Katalog</span>
+                                }
+                            </td>
                             <td>@k.DenemeSayisi.</td>
                             <td>
                                 <span class="badge @(k.KayitOnayDurumu == OnayDurumu.Onaylandi ? "bg-success" : k.KayitOnayDurumu == OnayDurumu.Bekliyor ? "bg-warning text-dark" : "bg-danger")">
@@ -85,10 +113,94 @@
     </div>
 </div>
 
-<!-- Ders Kataloğundan Seçim -->
+<!-- 2) Öğrencinin Kendi Protokol Ders Listesi (Ana Seçim Tablosu) -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white">
+        <div class="fw-semibold">2. Protokol Ders Listem (Mezuniyet / Sertifika İçin Tamamlamam Gereken Dersler)</div>
+        <div class="text-muted small">
+            ÇAP/YDP Kabul ve Ders Protokol Formunuzda size atanmış zorunlu derslerdir. Daha önce başarıyla geçtiğiniz veya muaf olduğunuz dersler tekrar seçilemez.
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-sm table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-3">Ders Kodu</th>
+                    <th>Ders Adı</th>
+                    <th>Yarıyıl</th>
+                    <th>AKTS</th>
+                    <th>Durum</th>
+                    <th class="text-end pe-3">Dönemlik Seçim</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var dl in Model.ProtokolDerslerim)
+                {
+                    var d = dl.Ders;
+                    var gecildiVeyaMuaf = Model.GecilenVeyaMuafDersIdleri.Contains(d.Id);
+                    var buDonemSecildi = Model.BuDonemSecilenDersIdleri.Contains(d.Id);
+                    <tr class="@(gecildiVeyaMuaf ? "table-light text-muted" : "")">
+                        <td class="ps-3"><code>@d.DersKodu</code></td>
+                        <td>
+                            @d.DersAdi
+                            @if (dl.OzelSartliMi)
+                            {
+                                <span class="badge bg-warning text-dark ms-1">Özel Şartlı</span>
+                            }
+                        </td>
+                        <td>@d.Yariyil. Yarıyıl</td>
+                        <td>@d.Akts</td>
+                        <td>
+                            @if (dl.Durum == DersListesiDurumu.Muaf)
+                            {
+                                <span class="badge bg-info text-dark">Muaf</span>
+                            }
+                            else if (gecildiVeyaMuaf)
+                            {
+                                <span class="badge bg-success">Daha Önce Geçildi</span>
+                            }
+                            else if (buDonemSecildi)
+                            {
+                                <span class="badge bg-primary">Bu Dönem Seçildi</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Kalan Ders</span>
+                            }
+                        </td>
+                        <td class="text-end pe-3">
+                            @if (gecildiVeyaMuaf)
+                            {
+                                <span class="small text-success fw-semibold">✓ Tamamlandı</span>
+                            }
+                            else if (buDonemSecildi)
+                            {
+                                <span class="small text-primary fw-semibold">✓ Listede</span>
+                            }
+                            else
+                            {
+                                <form method="post" asp-page-handler="Sec" class="d-inline">
+                                    <input type="hidden" name="dersId" value="@d.Id" />
+                                    <button type="submit" class="btn btn-primary btn-sm">Bu Dönem Al (Onaya Gönder)</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 3) Teknik Seçmeli Havuzu ve Diğer Bölüm Kataloğu Dersleri -->
 <div class="card border-0 shadow-sm">
     <div class="card-header bg-white d-flex justify-content-between align-items-center">
-        <span class="fw-semibold">Bölüm Ders Kataloğundan Seçim (Serbest Metinle Ders Girilemez)</span>
+        <div>
+            <span class="fw-semibold">3. Teknik Seçmeli Havuzu ve Diğer Bölüm Kataloğu Dersleri</span>
+            <div class="text-muted small">
+                Protokolünüzdeki <em>"5./6./7. Yarıyıl Teknik Seçmeli Ders"</em> kontenjanları veya koordinatör onayıyla alacağınız ek katalog dersleri için buradan seçim yapabilirsiniz.
+            </div>
+        </div>
         <form method="get" class="d-flex gap-2">
             <input type="text" name="Arama" value="@Model.Arama" class="form-control form-control-sm"
                    placeholder="Ders kodu veya adı ara..." />
@@ -104,35 +216,40 @@
                     <th>Yarıyıl</th>
                     <th>AKTS</th>
                     <th>Tür</th>
-                    <th>Protokol Durumu</th>
                     <th class="text-end pe-3">Seç</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var d in Model.SecilebilirDersler)
+                @foreach (var d in Model.DigerKatalogDersleri)
                 {
-                    var protokoldeVar = protokolDersIdleri.Contains(d.Id);
-                    <tr>
+                    var gecildi = Model.GecilenVeyaMuafDersIdleri.Contains(d.Id);
+                    var buDonemSecildi = Model.BuDonemSecilenDersIdleri.Contains(d.Id);
+                    <tr class="@(gecildi ? "table-light text-muted" : "")">
                         <td class="ps-3"><code>@d.DersKodu</code></td>
                         <td>@d.DersAdi</td>
                         <td>@d.Yariyil. Yarıyıl</td>
                         <td>@d.Akts</td>
-                        <td class="small">@d.DersTuru</td>
                         <td>
-                            @if (protokoldeVar)
+                            <span class="badge @(d.DersTuru == DersTuru.TeknikSecmeli ? "bg-info text-dark" : "bg-secondary")">
+                                @d.DersTuru
+                            </span>
+                        </td>
+                        <td class="text-end pe-3">
+                            @if (gecildi)
                             {
-                                <span class="badge bg-primary">Protokol Dersim</span>
+                                <span class="small text-success fw-semibold">✓ Tamamlandı</span>
+                            }
+                            else if (buDonemSecildi)
+                            {
+                                <span class="small text-primary fw-semibold">✓ Bu Dönem Seçildi</span>
                             }
                             else
                             {
-                                <span class="badge bg-secondary">Genel Katalog</span>
+                                <form method="post" asp-page-handler="Sec" class="d-inline">
+                                    <input type="hidden" name="dersId" value="@d.Id" />
+                                    <button type="submit" class="btn btn-outline-primary btn-sm">Seç ve Onaya Gönder</button>
+                                </form>
                             }
-                        </td>
-                        <td class="text-end pe-3">
-                            <form method="post" asp-page-handler="Sec" class="d-inline">
-                                <input type="hidden" name="dersId" value="@d.Id" />
-                                <button type="submit" class="btn btn-outline-primary btn-sm">Onaya Gönder</button>
-                            </form>
                         </td>
                     </tr>
                 }

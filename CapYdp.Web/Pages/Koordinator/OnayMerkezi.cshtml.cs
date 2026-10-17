@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using CapYdp.Web.Data;
 using CapYdp.Web.Models;
+using CapYdp.Web.Pages.OgrenciPaneli;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +21,15 @@ public class OnayMerkeziModel : PageModel
     public List<DersKayit> BekleyenNotKayitlari { get; set; } = [];
     public List<DersKayit> SonIslenenKayitlar { get; set; } = [];
 
+    /// <summary>(OgrenciId, DonemId) -> (ToplamAkts, DersSayisi)</summary>
+    public Dictionary<(int OgrenciId, int DonemId), (int ToplamAkts, int DersSayisi)> OgrenciDonemYukleri { get; set; } = [];
+
+    /// <summary>(OgrenciId, DersId) çifti öğrencinin aktif protokol listesinde var mı?</summary>
+    public HashSet<(int OgrenciId, int DersId)> ProtokolDersCiftleri { get; set; } = [];
+
+    /// <summary>(OgrenciId, DersId) çifti öğrenci tarafından daha önce onaylı olarak geçilmiş mi?</summary>
+    public HashSet<(int OgrenciId, int DersId)> DahaOnceGecilenCiftler { get; set; } = [];
+
     public async Task OnGetAsync()
     {
         BekleyenDersKayitlari = await _db.DersKayitlari
@@ -27,7 +37,8 @@ public class OnayMerkeziModel : PageModel
             .Include(k => k.Ders)
             .Include(k => k.Donem)
             .Where(k => k.KayitOnayDurumu == OnayDurumu.Bekliyor)
-            .OrderBy(k => k.GirisTarihi)
+            .OrderBy(k => k.Ogrenci.OgrenciNo)
+            .ThenBy(k => k.Ders.DersKodu)
             .ToListAsync();
 
         BekleyenNotKayitlari = await _db.DersKayitlari
@@ -46,6 +57,31 @@ public class OnayMerkeziModel : PageModel
             .OrderByDescending(k => k.NotOnayTarihi ?? k.KayitOnayTarihi ?? k.GirisTarihi)
             .Take(15)
             .ToListAsync();
+
+        // Öğrencilerin dönemlik toplam AKTS ve ders yüklerini hesapla (Bekliyor + Onaylandi)
+        var aktifSecimler = await _db.DersKayitlari
+            .Include(k => k.Ders)
+            .Where(k => k.KayitOnayDurumu == OnayDurumu.Bekliyor || k.KayitOnayDurumu == OnayDurumu.Onaylandi)
+            .ToListAsync();
+
+        OgrenciDonemYukleri = aktifSecimler
+            .GroupBy(k => (k.OgrenciId, k.DonemId))
+            .ToDictionary(
+                g => g.Key,
+                g => (ToplamAkts: g.Sum(x => x.Ders.Akts), DersSayisi: g.Count()));
+
+        var protokolListesi = await _db.OgrenciDersListeleri
+            .Where(dl => dl.Durum == DersListesiDurumu.Aktif)
+            .Select(dl => new { dl.OgrenciId, dl.DersId })
+            .ToListAsync();
+        ProtokolDersCiftleri = protokolListesi.Select(x => (x.OgrenciId, x.DersId)).ToHashSet();
+
+        var gecilenListesi = await _db.DersKayitlari
+            .Where(k => k.NotOnayDurumu == OnayDurumu.Onaylandi
+                        && (k.DersDurumu == DersDurumu.Gecti || k.DersDurumu == DersDurumu.Muaf))
+            .Select(k => new { k.OgrenciId, k.DersId })
+            .ToListAsync();
+        DahaOnceGecilenCiftler = gecilenListesi.Select(x => (x.OgrenciId, x.DersId)).ToHashSet();
     }
 
     public async Task<IActionResult> OnPostDersKaydiOnaylaAsync(int id)

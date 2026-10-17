@@ -1,5 +1,6 @@
 @page
 @model CapYdp.Web.Pages.Koordinator.OnayMerkeziModel
+@using CapYdp.Web.Pages.OgrenciPaneli
 @{
     ViewData["Title"] = "Onay Merkezi";
 }
@@ -37,10 +38,10 @@
             <table class="table table-sm table-hover mb-0 align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th class="ps-3">Öğrenci</th>
+                        <th class="ps-3">Öğrenci &amp; Dönem Yükü</th>
                         <th>Program</th>
                         <th>Dönem</th>
-                        <th>Ders</th>
+                        <th>Ders &amp; Protokol Durumu</th>
                         <th>AKTS</th>
                         <th>Deneme</th>
                         <th class="text-end pe-3">Onay / Gerekçeli Red</th>
@@ -49,16 +50,43 @@
                 <tbody>
                     @foreach (var k in Model.BekleyenDersKayitlari)
                     {
-                        <tr>
+                        var yuk = Model.OgrenciDonemYukleri.GetValueOrDefault((k.OgrenciId, k.DonemId));
+                        var asiriYuk = yuk.ToplamAkts > DersGirisiModel.VarsayilanDonemMaxAkts
+                                       || yuk.DersSayisi > DersGirisiModel.VarsayilanDonemMaxDersSayisi;
+                        var protokolde = Model.ProtokolDersCiftleri.Contains((k.OgrenciId, k.DersId));
+                        var dahaOnceGecildi = Model.DahaOnceGecilenCiftler.Contains((k.OgrenciId, k.DersId));
+                        <tr class="@(dahaOnceGecildi ? "table-danger" : asiriYuk ? "table-warning" : "")">
                             <td class="ps-3">
                                 <a asp-page="/Koordinator/OgrenciDetay" asp-route-id="@k.OgrenciId" class="text-decoration-none fw-semibold">
                                     @k.Ogrenci.Kullanici.AdSoyad
                                 </a>
-                                <div class="small text-muted"><code>@k.Ogrenci.OgrenciNo</code></div>
+                                <div class="small text-muted">
+                                    <code>@k.Ogrenci.OgrenciNo</code> · Dönem Toplamı: <strong>@yuk.ToplamAkts AKTS (@yuk.DersSayisi ders)</strong>
+                                </div>
+                                @if (asiriYuk)
+                                {
+                                    <span class="badge bg-warning text-dark mt-1">
+                                        ⚠️ Dönemlik Yük Aşımı (&gt;@DersGirisiModel.VarsayilanDonemMaxAkts AKTS / @DersGirisiModel.VarsayilanDonemMaxDersSayisi ders)
+                                    </span>
+                                }
                             </td>
                             <td><span class="badge bg-dark">@k.Ogrenci.ProgramTuru</span></td>
                             <td class="small">@k.Donem.DonemAdi</td>
-                            <td><code>@k.Ders.DersKodu</code> — @k.Ders.DersAdi</td>
+                            <td>
+                                <div><code>@k.Ders.DersKodu</code> — @k.Ders.DersAdi</div>
+                                @if (protokolde)
+                                {
+                                    <span class="badge bg-primary">Protokol Dersi</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-info text-dark">Teknik Seçmeli / Katalog</span>
+                                }
+                                @if (dahaOnceGecildi)
+                                {
+                                    <span class="badge bg-danger ms-1">⚠️ Daha Önce Geçilmiş Ders!</span>
+                                }
+                            </td>
                             <td>@k.Ders.Akts</td>
                             <td>@k.DenemeSayisi.</td>
                             <td class="text-end pe-3">
