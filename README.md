@@ -12,7 +12,7 @@ protokol ders listesi, ders kaydı, not girişi ve koordinatör onay süreçleri
 | Uygulama | ASP.NET Core 10 Razor Pages (C#) |
 | Kimlik / Yetki | ASP.NET Core Identity, rol + klasör bazlı politika (Default-Deny) |
 | Veri erişimi | Entity Framework Core 10 |
-| Veritabanı | PostgreSQL (Neon, canlı) · SQL Server LocalDB / SQLite (yerel geliştirme) |
+| Veritabanı | PostgreSQL (Render / Neon, canlı) · SQL Server LocalDB / SQLite (yerel geliştirme) |
 | Barındırma | Docker imajı · Render (ücretsiz web servisi) |
 | Arayüz | Bootstrap 5 |
 
@@ -44,12 +44,11 @@ dotnet run
 Veritabanı sağlayıcısı otomatik seçilir: `DATABASE_URL` tanımlıysa PostgreSQL, Windows'ta LocalDB kuruluysa SQL Server, aksi halde SQLite.
 İlk açılışta şema oluşturulur ve sentetik demo verisi yüklenir.
 
-## Canlı ortam (Render + Neon)
+## Canlı ortam (Render + PostgreSQL)
 
-1. Neon'da ücretsiz bir PostgreSQL projesi açılır, bağlantı adresi (`postgresql://...`) kopyalanır.
-2. Render'da bu depo **Docker** web servisi olarak bağlanır (veya `render.yaml` Blueprint ile).
-3. Ortam değişkeni: `DATABASE_URL = <Neon bağlantı adresi>` (isteğe bağlı: `DemoModu=true` giriş ekranında test hesaplarını gösterir).
-4. Sağlık kontrolü: `GET /saglik` → `{"durum":"calisiyor","veritabani":"bagli"}`
+- **Canlı adres:** https://capydp-otomasyon.onrender.com
+- **Sağlık kontrolü:** `GET /saglik` → `{"durum":"calisiyor","veritabani":"bagli"}`
+- Render üzerinde Docker web servisi olarak çalışır; `DATABASE_URL` ortam değişkeniyle PostgreSQL veritabanına bağlanır.
 
 ## Proje durumu
 
