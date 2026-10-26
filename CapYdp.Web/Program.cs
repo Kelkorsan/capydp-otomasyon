@@ -222,6 +222,8 @@ static string? PostgresBaglantisiniCoz(string? ham)
         return null;
     }
 
+    ham = ham.Trim().Trim('\'', '"');
+
     if (!ham.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase)
         && !ham.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
     {
@@ -237,7 +239,8 @@ static string? PostgresBaglantisiniCoz(string? ham)
         Database = Uri.UnescapeDataString(uri.AbsolutePath.TrimStart('/')),
         Username = Uri.UnescapeDataString(kullaniciBilgisi[0]),
         Password = kullaniciBilgisi.Length > 1 ? Uri.UnescapeDataString(kullaniciBilgisi[1]) : null,
-        SslMode = SslMode.Require,
+        // URI içinde ?sslmode=require varsa aşağıda Require yapılır; yoksa Prefer ile hem TLS hem iç ağ desteklenir.
+        SslMode = SslMode.Prefer,
         // Neon sunucusuz (auto-suspend) yapısı için: soğuk uyanma toleransı ve 5 dk uyku öncesi boşta bağlantı temizliği
         Timeout = 30,
         CommandTimeout = 30,
