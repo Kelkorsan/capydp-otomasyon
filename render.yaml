@@ -1,0 +1,16 @@
+# Render Blueprint — tek tıkla kurulum (Dashboard > New > Blueprint)
+# Veritabanı Neon (ücretsiz PostgreSQL) üzerinde tutulur; DATABASE_URL değeri Render panelinden gizli olarak girilir.
+services:
+  - type: web
+    name: capydp-otomasyon
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /saglik
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DemoModu
+        value: "false"

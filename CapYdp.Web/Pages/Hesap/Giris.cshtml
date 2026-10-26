@@ -1,8 +1,11 @@
 @page
 @model CapYdp.Web.Pages.Hesap.GirisModel
 @inject IWebHostEnvironment Ortam
+@inject IConfiguration Yapilandirma
 @{
     ViewData["Title"] = "Sisteme Giriş";
+    // Demo hesap paneli: geliştirme ortamında veya canlı ortamda DemoModu=true ortam değişkeniyle açılır.
+    var demoPaneliGoster = Ortam.IsDevelopment() || Yapilandirma.GetValue<bool>("DemoModu");
 }
 
 <div class="row justify-content-center mt-4">
@@ -46,7 +49,7 @@
         </div>
     </div>
 
-    @if (Ortam.IsDevelopment())
+    @if (demoPaneliGoster)
     {
         <div class="col-md-5 mt-3 mt-md-0">
             <div class="card border-secondary shadow-sm">
