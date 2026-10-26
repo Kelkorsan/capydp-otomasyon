@@ -1,3 +1,4 @@
+using System.Globalization;
 using CapYdp.Web.Data;
 using CapYdp.Web.Models;
 using Microsoft.AspNetCore.DataProtection;
@@ -6,6 +7,23 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Win32;
 using Npgsql;
+
+// Render/Railway gibi PaaS servisleri dinlenecek portu PORT ortam değişkeniyle bildirir.
+// WebApplication.CreateBuilder çağrılmadan önce ASPNETCORE_HTTP_PORTS'a aktarılır.
+var platformPortu = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrWhiteSpace(platformPortu))
+{
+    Environment.SetEnvironmentVariable("ASPNETCORE_HTTP_PORTS", platformPortu);
+}
+
+// HTML5 <input type="number" step="0.01"> alanları (GANO, yüzlük puan notu) ondalık ayırıcı olarak her zaman '.' gönderir.
+// Türkçe metin/tarih davranışı korunurken sayısal biçimlendirme '.' (Invariant) olarak sabitlenir.
+var kultur = new CultureInfo("tr-TR")
+{
+    NumberFormat = CultureInfo.InvariantCulture.NumberFormat
+};
+CultureInfo.DefaultThreadCurrentCulture = kultur;
+CultureInfo.DefaultThreadCurrentUICulture = kultur;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,13 +54,6 @@ if (postgresKullan && postgresBaglanti is null)
 // Npgsql 6+ yalnızca Kind=Utc DateTime kabul eder; mevcut kod tabanıyla birebir uyum için
 // tarih alanları 'timestamp without time zone' olarak eşlenir (değerler zaten UTC tutuluyor).
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
-
-// Render/Railway gibi PaaS servisleri dinlenecek portu PORT ortam değişkeniyle bildirir.
-var platformPortu = Environment.GetEnvironmentVariable("PORT");
-if (!string.IsNullOrWhiteSpace(platformPortu))
-{
-    builder.WebHost.UseUrls($"http://0.0.0.0:{platformPortu}");
-}
 
 builder.Services.AddHttpContextAccessor();
 
@@ -145,7 +156,10 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// İç ağdan gelen düz HTTP sağlık kontrollerini (/saglik) yönlendirmeden muaf tut.
+app.UseWhen(
+    ctx => !ctx.Request.Path.StartsWithSegments("/saglik"),
+    altUygulama => altUygulama.UseHttpsRedirection());
 
 // Temel güvenlik başlıkları (Rapor Bölüm 12 — XSS / Clickjacking / MIME sniffing önlemleri)
 app.Use(async (context, next) =>
@@ -223,7 +237,13 @@ static string? PostgresBaglantisiniCoz(string? ham)
         Database = Uri.UnescapeDataString(uri.AbsolutePath.TrimStart('/')),
         Username = Uri.UnescapeDataString(kullaniciBilgisi[0]),
         Password = kullaniciBilgisi.Length > 1 ? Uri.UnescapeDataString(kullaniciBilgisi[1]) : null,
-        SslMode = SslMode.Require
+        SslMode = SslMode.Require,
+        // Neon sunucusuz (auto-suspend) yapısı için: soğuk uyanma toleransı ve 5 dk uyku öncesi boşta bağlantı temizliği
+        Timeout = 30,
+        CommandTimeout = 30,
+        KeepAlive = 30,
+        ConnectionIdleLifetime = 60,
+        ConnectionPruningInterval = 10
     };
 
     foreach (var parca in uri.Query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries))

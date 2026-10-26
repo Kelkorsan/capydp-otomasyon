@@ -1,8 +1,22 @@
-﻿@page
+@page
 @model PrivacyModel
 @{
-    ViewData["Title"] = "Privacy Policy";
+    ViewData["Title"] = "Veri Güvenliği ve Gizlilik";
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+<div class="card shadow-sm border-0 mt-3">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">Veri Güvenliği ve Sentetik Test Verisi Bilgilendirmesi</h5>
+    </div>
+    <div class="card-body">
+        <p>
+            Bu uygulama, Selçuk Üniversitesi Teknoloji Fakültesi Bilgisayar Mühendisliği Bölümü
+            <strong>Çift Anadal (ÇAP) ve Yan Dal (YDP) Öğrenci Takip Otomasyonu</strong> bitirme projesi kapsamında geliştirilmiştir.
+        </p>
+        <ul class="mb-0">
+            <li>Canlı değerlendirme ortamında yalnızca <strong>sentetik (gerçek kişilere ait olmayan)</strong> test verileri kullanılmaktadır.</li>
+            <li>Tüm ekleme ve güncelleme işlemleri değiştirilemez denetim izi (Audit Trail) altında kayıt altına alınır; veriler fiziksel olarak silinmez (soft-delete).</li>
+            <li>Oturum çerezleri <code>HttpOnly</code> ve <code>SameSite=Lax</code> politikalarıyla korunmakta, ardışık hatalı giriş denemelerinde geçici hesap kilitleme uygulanmaktadır.</li>
+        </ul>
+    </div>
+</div>
