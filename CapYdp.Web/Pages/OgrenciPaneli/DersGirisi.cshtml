@@ -10,6 +10,7 @@
     var protokolDersIdleri = Model.ProtokolDerslerim.Select(dl => dl.DersId).ToHashSet();
     var asiriYukUyarisiVar = secilenAkts > DersGirisiModel.VarsayilanDonemMaxAkts
                              || secilenDersSayisi > DersGirisiModel.VarsayilanDonemMaxDersSayisi;
+    var ydpMi = Model.Ogrenci.ProgramTuru == ProgramTuru.YDP;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -17,12 +18,12 @@
         <h3 class="mb-0">Dönemlik Ders Girişi</h3>
         <span class="text-muted small">
             Aktif Dönem: <strong>@(Model.AktifDonem?.DonemAdi ?? "Tanımlı Değil")</strong> ·
-            Seçimler <em>"Onay Bekliyor"</em> olarak başlar, koordinatör onayladığında kilitlenir.
+            Seçimler <em>Onay Bekliyor</em> olarak başlar, koordinatör onayladığında kilitlenir.
         </span>
     </div>
     <div class="text-end">
         <span class="badge @(asiriYukUyarisiVar ? "bg-warning text-dark" : "bg-primary") fs-6">
-            Bu Dönem Seçilen: @secilenAkts AKTS (@secilenDersSayisi Ders)
+            Bu Dönem Seçilen: @secilenAkts AKTS · @secilenDersSayisi Ders
         </span>
         <div class="small text-muted">Standart dönemlik üst sınır: @DersGirisiModel.VarsayilanDonemMaxAkts AKTS / @DersGirisiModel.VarsayilanDonemMaxDersSayisi ders</div>
     </div>
@@ -31,22 +32,31 @@
 @if (asiriYukUyarisiVar)
 {
     <div class="alert alert-warning border-warning shadow-sm mb-4">
-        <strong>⚠️ Dönemlik Kredi / Ders Yükü Uyarısı (Rapor Bölüm 8.1):</strong>
-        Bu dönem için toplam <strong>@secilenAkts AKTS (@secilenDersSayisi ders)</strong> seçtiniz.
-        Standart dönemlik üst sınır <strong>@DersGirisiModel.VarsayilanDonemMaxAkts AKTS / @DersGirisiModel.VarsayilanDonemMaxDersSayisi ders</strong>'tir.
-        <em>Sistem seçiminizi engellemez ancak Koordinatör Onay Merkezi'nde aşırı yük uyarısıyla değerlendirilecektir.</em>
+        <strong>Dönemlik Kredi ve Ders Yükü Uyarısı:</strong>
+        Bu dönem için toplam <strong>@secilenAkts AKTS ve @secilenDersSayisi ders</strong> seçtiniz.
+        Standart dönemlik üst sınır <strong>@DersGirisiModel.VarsayilanDonemMaxAkts AKTS / @DersGirisiModel.VarsayilanDonemMaxDersSayisi ders</strong> olarak tanımlanmıştır.
+        <em>Sistem seçiminizi engellemez ancak Koordinatör Onay Merkezi ekranında yük uyarısıyla değerlendirilecektir.</em>
     </div>
 }
 
 <!-- 1) Bu Dönem Seçilen Dersler -->
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-header bg-white fw-semibold">
-        1. @(Model.AktifDonem?.DonemAdi) Dönemi Seçtiğim Dersler
+        @(Model.AktifDonem?.DonemAdi) Dönemi Seçilen Dersler
     </div>
     <div class="card-body p-0">
         @if (Model.BuDonemKayitlari.Count == 0)
         {
-            <div class="p-3 text-muted small">Bu dönem için henüz ders seçimi yapmadınız. Aşağıdaki protokol listenizden ders seçebilirsiniz.</div>
+            <div class="p-3 text-muted small">
+                @if (ydpMi)
+                {
+                    <span>Bu dönem için henüz ders seçimi yapmadınız. Aşağıdaki yan dal ders planınızdan veya bölüm ders havuzundan seçim yapabilirsiniz.</span>
+                }
+                else
+                {
+                    <span>Bu dönem için henüz ders seçimi yapmadınız. Aşağıdaki protokol listenizden veya teknik seçmeli havuzundan seçim yapabilirsiniz.</span>
+                }
+            </div>
         }
         else
         {
@@ -75,11 +85,11 @@
                             <td>
                                 @if (protokolde)
                                 {
-                                    <span class="badge bg-primary">Protokol Dersim</span>
+                                    <span class="badge bg-primary">@(ydpMi ? "Ders Planım" : "Protokol Dersim")</span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-info text-dark">Teknik Seçmeli / Katalog</span>
+                                    <span class="badge bg-info text-dark">@(ydpMi ? "Yan Dal Havuzu" : "Teknik Seçmeli")</span>
                                 }
                             </td>
                             <td>@k.DenemeSayisi.</td>
@@ -113,13 +123,23 @@
     </div>
 </div>
 
-<!-- 2) Öğrencinin Kendi Protokol Ders Listesi (Ana Seçim Tablosu) -->
+<!-- 2) Öğrencinin Protokol / Yan Dal Ders Planı Listesi -->
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-header bg-white">
-        <div class="fw-semibold">2. Protokol Ders Listem (Mezuniyet / Sertifika İçin Tamamlamam Gereken Dersler)</div>
-        <div class="text-muted small">
-            ÇAP/YDP Kabul ve Ders Protokol Formunuzda size atanmış zorunlu derslerdir. Daha önce başarıyla geçtiğiniz veya muaf olduğunuz dersler tekrar seçilemez.
-        </div>
+        @if (ydpMi)
+        {
+            <div class="fw-semibold">Yan Dal Ders Planım</div>
+            <div class="text-muted small">
+                Yan Dal Kabul ve Ders Protokol Formu kapsamında koordinatörünüzle birlikte belirlenen ders planınızdır. Yan dal sertifikası için en az 6 ders ve 30 AKTS tamamlanmalıdır.
+            </div>
+        }
+        else
+        {
+            <div class="fw-semibold">Çift Anadal Protokol Derslerim</div>
+            <div class="text-muted small">
+                Çift Anadal Kabul ve Ders Protokol Formu kapsamında mezuniyet için tamamlamanız gereken derslerdir. Daha önce başarıyla geçilen veya muaf olunan dersler tekrar seçilemez.
+            </div>
+        }
     </div>
     <div class="card-body p-0">
         <table class="table table-sm table-hover mb-0 align-middle">
@@ -157,7 +177,7 @@
                             }
                             else if (gecildiVeyaMuaf)
                             {
-                                <span class="badge bg-success">Daha Önce Geçildi</span>
+                                <span class="badge bg-success">Geçildi</span>
                             }
                             else if (buDonemSecildi)
                             {
@@ -181,7 +201,7 @@
                             {
                                 <form method="post" asp-page-handler="Sec" class="d-inline">
                                     <input type="hidden" name="dersId" value="@d.Id" />
-                                    <button type="submit" class="btn btn-primary btn-sm">Bu Dönem Al (Onaya Gönder)</button>
+                                    <button type="submit" class="btn btn-primary btn-sm">Bu Dönem Al</button>
                                 </form>
                             }
                         </td>
@@ -192,14 +212,24 @@
     </div>
 </div>
 
-<!-- 3) Teknik Seçmeli Havuzu ve Diğer Bölüm Kataloğu Dersleri -->
+<!-- 3) Teknik Seçmeli / Yan Dal Ders Havuzu -->
 <div class="card border-0 shadow-sm">
     <div class="card-header bg-white d-flex justify-content-between align-items-center">
         <div>
-            <span class="fw-semibold">3. Teknik Seçmeli Havuzu ve Diğer Bölüm Kataloğu Dersleri</span>
-            <div class="text-muted small">
-                Protokolünüzdeki <em>"5./6./7. Yarıyıl Teknik Seçmeli Ders"</em> kontenjanları veya koordinatör onayıyla alacağınız ek katalog dersleri için buradan seçim yapabilirsiniz.
-            </div>
+            @if (ydpMi)
+            {
+                <span class="fw-semibold">Yan Dal Ders Havuzu</span>
+                <div class="text-muted small">
+                    Ders planınıza ek olarak veya açılmayan ve çakışan derslerin yerine bölümün yan dal ders havuzundan ders seçerek koordinatör onayına gönderebilirsiniz.
+                </div>
+            }
+            else
+            {
+                <span class="fw-semibold">Teknik Seçmeli ve Bölüm Ders Kataloğu</span>
+                <div class="text-muted small">
+                    Protokolünüzdeki yarıyıl teknik seçmeli ders kontenjanları veya koordinatör onayıyla alacağınız katalog dersleri için seçim yapabilirsiniz.
+                </div>
+            }
         </div>
         <form method="get" class="d-flex gap-2">
             <input type="text" name="Arama" value="@Model.Arama" class="form-control form-control-sm"

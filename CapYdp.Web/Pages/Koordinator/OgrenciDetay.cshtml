@@ -28,7 +28,7 @@
                 <div class="mb-1"><strong>Anadal:</strong> @Model.Ogrenci.AnadalFakulte / @Model.Ogrenci.AnadalBolum</div>
                 <div class="mb-1"><strong>Kabul Dönemi:</strong> @Model.Ogrenci.KabulDonemi.DonemAdi</div>
                 <hr class="my-2" />
-                <div><strong>Tamamlanma Durumu (Onaylı AKTS):</strong></div>
+                <div><strong>AKTS Tamamlanma Durumu:</strong></div>
                 <div class="d-flex justify-content-between small mt-1">
                     <span>Tamamlanan: <strong>@Model.TamamlananAkts AKTS</strong></span>
                     <span>Kalan: <strong>@Model.KalanAkts AKTS</strong></span>
@@ -42,14 +42,14 @@
 
     <div class="col-md-4">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white fw-semibold">Anadal GANO Bilgisi (Koordinatör Girişi)</div>
+            <div class="card-header bg-white fw-semibold">Anadal GANO Bilgisi</div>
             <div class="card-body small">
                 <p class="mb-2">
                     Mevcut GANO:
                     <strong class="fs-5">@(Model.Ogrenci.AnadalGano?.ToString("0.00") ?? "Girilmedi")</strong>
                     @if (!string.IsNullOrEmpty(Model.Ogrenci.GanoKaynagi))
                     {
-                        <span class="text-muted d-block">Kaynak: @Model.Ogrenci.GanoKaynagi (@Model.Ogrenci.GanoGuncellemeTarihi?.ToString("yyyy-MM-dd"))</span>
+                        <span class="text-muted d-block">Kaynak: @Model.Ogrenci.GanoKaynagi · @Model.Ogrenci.GanoGuncellemeTarihi?.ToString("yyyy-MM-dd")</span>
                     }
                 </p>
                 <form method="post" asp-page-handler="GanoGuncelle" asp-route-id="@Model.Ogrenci.Id" class="row g-2">
@@ -59,7 +59,7 @@
                     </div>
                     <div class="col-7">
                         <input type="text" name="ganoKaynagi" class="form-control form-control-sm"
-                               placeholder="Kaynak (Örn: Transkript)" required />
+                               placeholder="Kaynak belgesi" required />
                     </div>
                     <div class="col-12">
                         <button type="submit" class="btn btn-outline-primary btn-sm w-100">Kaynağıyla GANO Güncelle</button>
@@ -84,7 +84,7 @@
                     </div>
                     <div class="col-12">
                         <input type="text" name="gerekce" class="form-control form-control-sm"
-                               placeholder="Durum değişiklik gerekçesi (Zorunlu)" required />
+                               placeholder="Durum değişiklik gerekçesi" required />
                     </div>
                     <div class="col-12">
                         <button type="submit" class="btn btn-outline-dark btn-sm w-100">Gerekçeli Durum Güncelle</button>
@@ -95,10 +95,13 @@
     </div>
 </div>
 
-<!-- 1) Protokol Ders Listesi -->
+<!-- 1) Protokol / Yan Dal Ders Listesi -->
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-header bg-white d-flex justify-content-between align-items-center">
-        <span class="fw-semibold">Protokol / Öğrencinin Alacağı Dersler Listesi (@Model.Ogrenci.DersListesi.Count ders)</span>
+        <span class="fw-semibold">
+            @(Model.Ogrenci.ProgramTuru == ProgramTuru.YDP ? "Yan Dal Ders Planı" : "Çift Anadal Protokol Ders Listesi")
+            <span class="badge bg-secondary ms-1">@Model.Ogrenci.DersListesi.Count ders</span>
+        </span>
         <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#dersAtamaPanel">
             + Katalogdan Ders Ata
         </button>
@@ -111,7 +114,7 @@
                 <select name="dersId" class="form-select form-select-sm" required>
                     @foreach (var d in Model.AktifKatalogDersleri)
                     {
-                        <option value="@d.Id">@d.DersKodu — @d.DersAdi (@d.Akts AKTS, @d.Yariyil. Yarıyıl)</option>
+                        <option value="@d.Id">@d.DersKodu — @d.DersAdi · @d.Akts AKTS · @d.Yariyil. Yarıyıl</option>
                     }
                 </select>
             </div>
@@ -192,13 +195,13 @@
     <div class="card-header bg-white d-flex justify-content-between align-items-center">
         <span class="fw-semibold">Dönemlik Ders Kayıtları ve Not Takip Tablosu</span>
         <button class="btn btn-outline-dark btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#geriyeDonukPanel">
-            + Geriye Dönük Ders/Not Girişi (Mevcut Öğrenci Aktarımı)
+            + Geriye Dönük Ders ve Not Girişi
         </button>
     </div>
 
     <div class="collapse border-bottom bg-light p-3" id="geriyeDonukPanel">
         <div class="small text-muted mb-2">
-            <strong>Mevcut Öğrenci Aktarımı (Rapor 4.2.2):</strong> Sistem açıldığında bölümde hâlihazırda kayıtlı olan öğrencilerin geçmiş dönem kayıtları koordinatör tarafından doğrudan onaylı olarak girilebilir.
+            Bölümde önceden kayıtlı öğrencilerin geçmiş dönem ders ve not kayıtları bu alandan doğrudan onaylı olarak işlenebilir.
         </div>
         <form method="post" asp-page-handler="GeriyeDonukKayit" asp-route-id="@Model.Ogrenci.Id" class="row g-2 align-items-end">
             <div class="col-md-3">
@@ -224,7 +227,7 @@
                 <input type="text" name="harfNotu" class="form-control form-control-sm" placeholder="BB" maxlength="2" required />
             </div>
             <div class="col-md-2">
-                <label class="form-label small fw-semibold">Puan (100'lük)</label>
+                <label class="form-label small fw-semibold">Puan</label>
                 <input type="number" name="puanNotu" step="0.01" min="0" max="100" class="form-control form-control-sm" placeholder="80" required />
             </div>
             <div class="col-md-2">
@@ -279,7 +282,7 @@
                         <td>
                             @if (!string.IsNullOrEmpty(dk.HarfNotu))
                             {
-                                <strong>@dk.HarfNotu</strong> <span class="text-muted small">(@dk.PuanNotu)</span>
+                                <strong>@dk.HarfNotu</strong> <span class="text-muted small">· @dk.PuanNotu</span>
                             }
                             else
                             {

@@ -107,7 +107,7 @@ public class DerslerModel : PageModel
         ders.AktifMi = !ders.AktifMi;
         var durumMetni = ders.AktifMi ? "aktif edildi" : "pasife alındı";
 
-        await _db.KaydetAsync($"{ders.DersKodu} dersi {durumMetni} (Soft-delete prensibi).");
+        await _db.KaydetAsync($"{ders.DersKodu} dersi {durumMetni}.");
         TempData["BasariMesaji"] = $"{ders.DersKodu} — {ders.DersAdi} {durumMetni}.";
         return RedirectToPage();
     }
@@ -122,7 +122,7 @@ public class DerslerModel : PageModel
             Aciklama = aciklama.Trim()
         });
 
-        await _db.KaydetAsync($"Yeni protokol muafiyet kuralı tanımlandı ({anadalDersKodu}).");
+        await _db.KaydetAsync($"Yeni protokol muafiyet kuralı tanımlandı: {anadalDersKodu}.");
         TempData["BasariMesaji"] = "Protokol muafiyet kuralı eklendi.";
         return RedirectToPage();
     }

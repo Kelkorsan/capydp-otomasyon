@@ -1,14 +1,14 @@
 @page
 @model CapYdp.Web.Pages.Koordinator.IslemKayitlariModel
 @{
-    ViewData["Title"] = "Denetim İzi (İşlem Kaydı)";
+    ViewData["Title"] = "Denetim İzi";
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h3 class="mb-0">İşlem Kaydı — Denetim İzi (Audit Trail)</h3>
+        <h3 class="mb-0">Denetim İzi</h3>
         <span class="text-muted small">
-            Sistemde yapılan her değişiklik <code>SaveChangesAsync</code> katmanında yakalanır ve değiştirilemez/silinemez olarak saklanır.
+            Sistemde gerçekleştirilen tüm veri değişiklikleri kullanıcı bilgisi ve zaman damgasıyla değiştirilemez olarak saklanır.
         </span>
     </div>
 </div>
@@ -48,12 +48,12 @@
             <thead class="table-light">
                 <tr>
                     <th class="ps-3">#</th>
-                    <th>Tarih (UTC)</th>
+                    <th>Tarih</th>
                     <th>Kullanıcı</th>
                     <th>Tür</th>
                     <th>Tablo / Kayıt</th>
                     <th>Açıklama / Gerekçe</th>
-                    <th class="pe-3">Değişiklik Özeti (JSON)</th>
+                    <th class="pe-3">Değişiklik Özeti</th>
                 </tr>
             </thead>
             <tbody>
@@ -61,7 +61,7 @@
                 {
                     var kullaniciAdi = k.KullaniciId.HasValue && Model.KullaniciAdlari.TryGetValue(k.KullaniciId.Value, out var ad)
                         ? ad
-                        : "Sistem (Başlangıç Tohumlama)";
+                        : "Sistem";
                     <tr>
                         <td class="ps-3 small text-muted">@k.Id</td>
                         <td class="small text-muted">@k.Tarih.ToString("yyyy-MM-dd HH:mm:ss")</td>

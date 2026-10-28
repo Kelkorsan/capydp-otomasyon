@@ -169,7 +169,7 @@ public class OnayMerkeziModel : PageModel
             aciklama: $"{kayit.Ogrenci.OgrenciNo} - {kayit.Ders.DersKodu} ders kaydı reddedildi: {redGerekce.Trim()}",
             islemTuru: "Red");
 
-        TempData["BasariMesaji"] = $"{kayit.Ders.DersKodu} ders kaydı gerekçesiyle reddedildi (kayıt silinmeden korundu).";
+        TempData["BasariMesaji"] = $"{kayit.Ders.DersKodu} ders kaydı gerekçesiyle reddedildi.";
         return RedirectToPage();
     }
 
@@ -195,7 +195,7 @@ public class OnayMerkeziModel : PageModel
             aciklama: $"{kayit.Ogrenci.OgrenciNo} - {kayit.Ders.DersKodu} not girişi ({kayit.HarfNotu} / {kayit.PuanNotu}) onaylandı.",
             islemTuru: "Onay");
 
-        TempData["BasariMesaji"] = $"{kayit.Ders.DersKodu} notu ({kayit.HarfNotu}) onaylandı ve kural hesaplarına dahil edildi.";
+        TempData["BasariMesaji"] = $"{kayit.Ders.DersKodu} dersi {kayit.HarfNotu} notu onaylandı.";
         return RedirectToPage();
     }
 
@@ -235,7 +235,7 @@ public class OnayMerkeziModel : PageModel
     {
         if (string.IsNullOrWhiteSpace(gerekce))
         {
-            TempData["HataMesaji"] = "Onaylanmış bir kaydı düzeltirken gerekçe zorunludur (Rapor Bölüm 7.1).";
+            TempData["HataMesaji"] = "Onaylanmış bir kaydı düzeltirken gerekçe girilmesi zorunludur.";
             return RedirectToPage();
         }
 
@@ -259,7 +259,7 @@ public class OnayMerkeziModel : PageModel
         kayit.DersDurumu = HarfNotuGectiMi(harf) ? DersDurumu.Gecti : DersDurumu.Kaldi;
 
         await _db.KaydetAsync(
-            aciklama: $"Onaylı kayıt koordinatör tarafından düzeltildi ({harf} / {yeniPuanNotu}). Gerekçe: {gerekce.Trim()}",
+            aciklama: $"Onaylı kayıt koordinatör tarafından {harf} / {yeniPuanNotu} olarak düzeltildi. Gerekçe: {gerekce.Trim()}",
             islemTuru: "Guncelleme");
 
         TempData["BasariMesaji"] = "Onaylı kayıt gerekçesiyle düzeltildi ve denetim izine kaydedildi.";

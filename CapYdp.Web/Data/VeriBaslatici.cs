@@ -29,12 +29,29 @@ public static class VeriBaslatici
         }
 
         // 2) Koordinatör ve Bölüm Başkanı hesapları
+        var eskiKoordinator = await kullaniciYoneticisi.FindByEmailAsync("koordinator@selcuk.edu.tr");
+        if (eskiKoordinator is not null && await kullaniciYoneticisi.FindByEmailAsync("ilkerozkan@selcuk.edu.tr") is null)
+        {
+            eskiKoordinator.Email = "ilkerozkan@selcuk.edu.tr";
+            eskiKoordinator.UserName = "ilkerozkan@selcuk.edu.tr";
+            eskiKoordinator.Ad = "Doç. Dr. İlker Ali";
+            eskiKoordinator.Soyad = "Özkan";
+            await kullaniciYoneticisi.UpdateAsync(eskiKoordinator);
+        }
+
         var koordinator = await KullaniciYoksaOlusturAsync(
             kullaniciYoneticisi,
-            email: "koordinator@selcuk.edu.tr",
-            ad: "Doç. Dr. ÇAP/YDP",
-            soyad: "Koordinatörü",
+            email: "ilkerozkan@selcuk.edu.tr",
+            ad: "Doç. Dr. İlker Ali",
+            soyad: "Özkan",
             rol: Roller.Koordinator);
+
+        if (koordinator.Ad != "Doç. Dr. İlker Ali" || koordinator.Soyad != "Özkan")
+        {
+            koordinator.Ad = "Doç. Dr. İlker Ali";
+            koordinator.Soyad = "Özkan";
+            await kullaniciYoneticisi.UpdateAsync(koordinator);
+        }
 
         await KullaniciYoksaOlusturAsync(
             kullaniciYoneticisi,

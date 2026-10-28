@@ -1,7 +1,7 @@
 @page "{id:int}"
 @model CapYdp.Web.Pages.BolumBaskani.OgrenciDetayModel
 @{
-    ViewData["Title"] = $"Öğrenci Detay (Salt Okuma) — {Model.Ogrenci.Kullanici.AdSoyad}";
+    ViewData["Title"] = $"Öğrenci Detay — {Model.Ogrenci.Kullanici.AdSoyad}";
 }
 
 <div class="mb-3">
@@ -12,12 +12,14 @@
         <span class="badge bg-secondary fs-6">Salt Okuma</span>
     </h3>
     <span class="text-muted small">
-        Öğrenci No: <code>@Model.Ogrenci.OgrenciNo</code> · Anadal: @Model.Ogrenci.AnadalBolum · Anadal GANO: <strong>@(Model.Ogrenci.AnadalGano?.ToString("0.00") ?? "-")</strong> (@(Model.Ogrenci.GanoKaynagi ?? "-"))
+        Öğrenci No: <code>@Model.Ogrenci.OgrenciNo</code> · Anadal: @Model.Ogrenci.AnadalBolum · Anadal GANO: <strong>@(Model.Ogrenci.AnadalGano?.ToString("0.00") ?? "-")</strong> · Kaynak: @(Model.Ogrenci.GanoKaynagi ?? "-")
     </span>
 </div>
 
 <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-white fw-semibold">Protokol Ders Listesi</div>
+    <div class="card-header bg-white fw-semibold">
+        @(Model.Ogrenci.ProgramTuru == ProgramTuru.YDP ? "Yan Dal Ders Planı" : "Çift Anadal Protokol Ders Listesi")
+    </div>
     <div class="card-body p-0">
         <table class="table table-sm mb-0 align-middle">
             <thead class="table-light">
@@ -70,7 +72,7 @@
                         <td><code>@dk.Ders.DersKodu</code> — @dk.Ders.DersAdi</td>
                         <td>@dk.DenemeSayisi.</td>
                         <td><span class="badge bg-secondary">@dk.KayitOnayDurumu</span></td>
-                        <td>@(dk.HarfNotu ?? "-") (@(dk.PuanNotu?.ToString() ?? "-"))</td>
+                        <td>@(dk.HarfNotu ?? "-") · @(dk.PuanNotu?.ToString() ?? "-")</td>
                         <td><span class="badge bg-secondary">@(dk.NotOnayDurumu?.ToString() ?? "-")</span></td>
                         <td class="pe-3"><span class="badge bg-dark">@dk.DersDurumu</span></td>
                     </tr>

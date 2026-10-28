@@ -5,7 +5,7 @@
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="mb-0">Öğrenci Yönetimi (ÇAP / YDP)</h3>
+    <h3 class="mb-0">Öğrenci Yönetimi</h3>
     <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#yeniOgrenciFormu">
         + Yeni Öğrenci Ekle ve Hesap Aç
     </button>
@@ -20,7 +20,7 @@
             <form method="post" asp-page-handler="Ekle">
                 <div class="row g-3">
                     <div class="col-md-3">
-                        <label class="form-label small fw-semibold">Öğrenci Numarası (ÇAP/YDP)</label>
+                        <label class="form-label small fw-semibold">Öğrenci Numarası</label>
                         <input asp-for="YeniOgrenci.OgrenciNo" class="form-control form-control-sm" placeholder="Örn: 243301012" required />
                     </div>
                     <div class="col-md-3">
@@ -38,7 +38,7 @@
                     </div>
 
                     <div class="col-md-4">
-                        <label class="form-label small fw-semibold">Okul E-Posta Adresi (Giriş Hesabı)</label>
+                        <label class="form-label small fw-semibold">Kurumsal E-Posta Adresi</label>
                         <input asp-for="YeniOgrenci.Email" type="email" class="form-control form-control-sm" placeholder="ad.soyad@ogr.selcuk.edu.tr" required />
                     </div>
                     <div class="col-md-4">
@@ -64,7 +64,7 @@
                         <input asp-for="YeniOgrenci.AnadalBolum" class="form-control form-control-sm" required />
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label small fw-semibold">Anadal GANO (Opsiyonel)</label>
+                        <label class="form-label small fw-semibold">Anadal GANO</label>
                         <input asp-for="YeniOgrenci.AnadalGano" type="number" step="0.01" min="0" max="4" class="form-control form-control-sm" placeholder="3.15" />
                     </div>
                     <div class="col-md-2">
@@ -76,7 +76,7 @@
                         <div class="form-check">
                             <input asp-for="YeniOgrenci.ProtokolZorunluDersleriniAta" class="form-check-input" />
                             <label asp-for="YeniOgrenci.ProtokolZorunluDersleriniAta" class="form-check-label small">
-                                ÇAP ise bölüm protokolündeki zorunlu dersleri öğrencinin ders listesine otomatik ata
+                                Çift Anadal öğrencisi ise bölüm protokolündeki zorunlu dersleri otomatik ata
                             </label>
                         </div>
                         <button type="submit" class="btn btn-success btn-sm px-4">Öğrenciyi Kaydet ve Hesabı Aç</button>
@@ -92,9 +92,9 @@
         <form method="get" class="row g-2 align-items-center">
             <div class="col-md-3">
                 <select name="FiltreProgram" class="form-select form-select-sm">
-                    <option value="">Tüm Programlar (ÇAP + YDP)</option>
-                    <option value="CAP" selected="@(Model.FiltreProgram == ProgramTuru.CAP)">Çift Anadal (ÇAP)</option>
-                    <option value="YDP" selected="@(Model.FiltreProgram == ProgramTuru.YDP)">Yan Dal (YDP)</option>
+                    <option value="">Tüm Programlar</option>
+                    <option value="CAP" selected="@(Model.FiltreProgram == ProgramTuru.CAP)">Çift Anadal</option>
+                    <option value="YDP" selected="@(Model.FiltreProgram == ProgramTuru.YDP)">Yan Dal</option>
                 </select>
             </div>
             <div class="col-md-3">

@@ -107,8 +107,8 @@ public class DersGirisiModel : PageModel
             GirisTarihi = DateTime.UtcNow
         });
 
-        var kaynakEtiketi = protokoldeVarMi ? "Protokol listesinden" : "Genel katalogdan (Protokol dışı / Seçmeli)";
-        await _db.KaydetAsync($"Öğrenci {aktifDonem.DonemAdi} dönemi için {ders.DersKodu} dersini ({kaynakEtiketi}) onaya gönderdi.");
+        var kaynakEtiketi = protokoldeVarMi ? "protokol listesinden" : "bölüm ders havuzundan";
+        await _db.KaydetAsync($"Öğrenci {aktifDonem.DonemAdi} dönemi için {ders.DersKodu} dersini {kaynakEtiketi} onaya gönderdi.");
 
         TempData["BasariMesaji"] = $"{ders.DersKodu} — {ders.DersAdi} dersi 'Onay Bekliyor' olarak eklendi.";
         return RedirectToPage();

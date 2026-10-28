@@ -43,7 +43,7 @@
                             <td>
                                 @if (!string.IsNullOrEmpty(k.HarfNotu))
                                 {
-                                    <strong>@k.HarfNotu</strong> <span class="text-muted small">(@k.PuanNotu)</span>
+                                    <strong>@k.HarfNotu</strong> <span class="text-muted small">· @k.PuanNotu</span>
                                 }
                                 else
                                 {
@@ -69,7 +69,7 @@
                             <td class="text-end pe-3">
                                 @if (k.NotOnayDurumu == OnayDurumu.Onaylandi)
                                 {
-                                    <span class="text-muted small">🔒 Onaylandı (Kilitli)</span>
+                                    <span class="text-muted small">🔒 Onaylandı</span>
                                 }
                                 else
                                 {

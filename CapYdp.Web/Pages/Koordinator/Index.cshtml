@@ -16,7 +16,7 @@
     <div class="d-flex gap-2">
         <a asp-page="/Koordinator/Ogrenciler" class="btn btn-primary btn-sm">+ Yeni Öğrenci Kaydı</a>
         <a asp-page="/Koordinator/OnayMerkezi" class="btn btn-warning btn-sm">
-            Onay Merkezi (@toplamBekleyen)
+            Onay Merkezi <span class="badge bg-dark ms-1">@toplamBekleyen</span>
         </a>
     </div>
 </div>
@@ -105,7 +105,7 @@
     <div class="col-md-6">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
-                <span>Anadal GANO Eşik Uyarıları (CAP &lt; 2.72 / YDP &lt; 2.30)</span>
+                <span>Anadal GANO Eşik Uyarıları</span>
                 <span class="badge bg-danger">@Model.GanoRiskliOgrenciler.Count</span>
             </div>
             <div class="card-body p-0">
@@ -148,14 +148,14 @@
 
 <div class="card border-0 shadow-sm mt-4">
     <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
-        <span>Son İşlem Kayıtları (Denetim İzi Özeti)</span>
+        <span>Son İşlem Kayıtları</span>
         <a asp-page="/Koordinator/IslemKayitlari" class="small text-decoration-none">Tümünü Gör &rarr;</a>
     </div>
     <div class="card-body p-0">
         <table class="table table-sm table-hover mb-0 align-middle">
             <thead class="table-light">
                 <tr>
-                    <th class="ps-3">Tarih (UTC)</th>
+                    <th class="ps-3">Tarih</th>
                     <th>İşlem Türü</th>
                     <th>Tablo</th>
                     <th>Kayıt ID</th>

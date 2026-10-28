@@ -42,7 +42,7 @@ public class OgrenciDetayModel : PageModel
     {
         if (string.IsNullOrWhiteSpace(ganoKaynagi))
         {
-            TempData["HataMesaji"] = "Anadal GANO güncellenirken bilginin kaynağı (örn. Transkript) zorunludur.";
+            TempData["HataMesaji"] = "Anadal GANO güncellenirken bilginin kaynağı belirtilmelidir.";
             return RedirectToPage(new { id });
         }
 
@@ -62,7 +62,7 @@ public class OgrenciDetayModel : PageModel
         ogrenci.GanoKaynagi = ganoKaynagi.Trim();
         ogrenci.GanoGuncellemeTarihi = DateTime.UtcNow;
 
-        await _db.KaydetAsync($"Anadal GANO {anadalGano:0.00} olarak güncellendi (Kaynak: {ganoKaynagi.Trim()}).");
+        await _db.KaydetAsync($"Anadal GANO {anadalGano:0.00} olarak güncellendi. Kaynak: {ganoKaynagi.Trim()}.");
         TempData["BasariMesaji"] = "Anadal GANO bilgisi kaynak açıklamasıyla güncellendi.";
         return RedirectToPage(new { id });
     }

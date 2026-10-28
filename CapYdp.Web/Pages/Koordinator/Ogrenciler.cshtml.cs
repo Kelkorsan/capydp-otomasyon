@@ -106,7 +106,7 @@ public class OgrencilerModel : PageModel
 
         if (YeniOgrenci.AnadalGano.HasValue && string.IsNullOrWhiteSpace(YeniOgrenci.GanoKaynagi))
         {
-            TempData["HataMesaji"] = "Anadal GANO girildiğinde bilginin kaynağı (örn. Transkript) belirtilmelidir.";
+            TempData["HataMesaji"] = "Anadal GANO girildiğinde bilginin kaynağı belirtilmelidir.";
             return RedirectToPage();
         }
 
@@ -145,7 +145,7 @@ public class OgrencilerModel : PageModel
         };
 
         _db.Ogrenciler.Add(ogrenci);
-        await _db.KaydetAsync($"Yeni {ogrenci.ProgramTuru} öğrencisi ({ogrenci.OgrenciNo} - {kullanici.AdSoyad}) kaydedildi.");
+        await _db.KaydetAsync($"Yeni {ogrenci.ProgramTuru} öğrencisi kaydedildi: {ogrenci.OgrenciNo} - {kullanici.AdSoyad}.");
 
         if (YeniOgrenci.ProtokolZorunluDersleriniAta && YeniOgrenci.ProgramTuru == ProgramTuru.CAP)
         {
@@ -167,7 +167,7 @@ public class OgrencilerModel : PageModel
             await _db.KaydetAsync($"{ogrenci.OgrenciNo} için protokol zorunlu dersleri otomatik atandı.");
         }
 
-        TempData["BasariMesaji"] = $"{kullanici.AdSoyad} ({ogrenci.OgrenciNo}) sisteme eklendi ve öğrenci hesabı açıldı.";
+        TempData["BasariMesaji"] = $"{kullanici.AdSoyad} sisteme eklendi ve öğrenci hesabı açıldı.";
         return RedirectToPage("/Koordinator/OgrenciDetay", new { id = ogrenci.Id });
     }
 

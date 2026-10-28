@@ -31,8 +31,6 @@ public class GirisModel : PageModel
         [Required(ErrorMessage = "Şifre zorunludur.")]
         [DataType(DataType.Password)]
         public string Sifre { get; set; } = string.Empty;
-
-        public bool BeniHatirla { get; set; }
     }
 
     public IActionResult OnGet()
@@ -64,7 +62,7 @@ public class GirisModel : PageModel
         var sonuc = await _girisYoneticisi.PasswordSignInAsync(
             kullanici,
             Girdi.Sifre,
-            Girdi.BeniHatirla,
+            isPersistent: false,
             lockoutOnFailure: true);
 
         if (sonuc.Succeeded)
