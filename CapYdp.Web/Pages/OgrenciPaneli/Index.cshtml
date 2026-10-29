@@ -109,7 +109,11 @@
                         <td>
                             @if (!string.IsNullOrEmpty(dk.HarfNotu))
                             {
-                                <strong>@dk.HarfNotu</strong> <span class="text-muted small">· @dk.PuanNotu</span>
+                                <strong>@dk.HarfNotu</strong>
+                                @if (dk.PuanNotu.HasValue)
+                                {
+                                    <span class="text-muted small">· @dk.PuanNotu</span>
+                                }
                             }
                             else
                             {

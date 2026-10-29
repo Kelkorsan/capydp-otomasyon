@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using CapYdp.Web.Data;
 using CapYdp.Web.Models;
-using CapYdp.Web.Pages.OgrenciPaneli;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +9,9 @@ namespace CapYdp.Web.Pages.Koordinator;
 
 public class OnayMerkeziModel : PageModel
 {
+    public static readonly string[] KoordinatorGecerliHarfNotlari =
+        ["AA", "BA", "BB", "CB", "CC", "DC", "DD", "FD", "FF", "DZ", "MU"];
+
     private readonly AppDbContext _db;
 
     public OnayMerkeziModel(AppDbContext db)
@@ -189,7 +191,7 @@ public class OnayMerkeziModel : PageModel
         kayit.NotOnayDurumu = OnayDurumu.Onaylandi;
         kayit.NotOnayTarihi = DateTime.UtcNow;
         kayit.NotOnaylayanId = koordinatorId;
-        kayit.DersDurumu = HarfNotuGectiMi(kayit.HarfNotu) ? DersDurumu.Gecti : DersDurumu.Kaldi;
+        kayit.DersDurumu = HarfNotundanDurumHesapla(kayit.HarfNotu ?? string.Empty);
 
         await _db.KaydetAsync(
             aciklama: $"{kayit.Ogrenci.OgrenciNo} - {kayit.Ders.DersKodu} not girişi ({kayit.HarfNotu} / {kayit.PuanNotu}) onaylandı.",
@@ -231,11 +233,30 @@ public class OnayMerkeziModel : PageModel
         return RedirectToPage();
     }
 
-    public async Task<IActionResult> OnPostOnayliDuzeltAsync(int id, string yeniHarfNotu, decimal yeniPuanNotu, string gerekce)
+    public async Task<IActionResult> OnPostOnayliDuzeltAsync(int id, string? yeniHarfNotu, decimal? yeniPuanNotu, string? gerekce)
     {
         if (string.IsNullOrWhiteSpace(gerekce))
         {
             TempData["HataMesaji"] = "Onaylanmış bir kaydı düzeltirken gerekçe girilmesi zorunludur.";
+            return RedirectToPage();
+        }
+
+        var harf = (yeniHarfNotu ?? string.Empty).Trim().ToUpperInvariant();
+        if (!KoordinatorGecerliHarfNotlari.Contains(harf))
+        {
+            TempData["HataMesaji"] = "Geçerli bir harf notu seçiniz (AA, BA, BB, CB, CC, DC, DD, FD, FF, DZ, MU).";
+            return RedirectToPage();
+        }
+
+        if (harf != "MU" && yeniPuanNotu is null)
+        {
+            TempData["HataMesaji"] = "MU (Muaf) dışındaki harf notları için 0-100 arasında puan girilmelidir.";
+            return RedirectToPage();
+        }
+
+        if (yeniPuanNotu is < 0m or > 100m)
+        {
+            TempData["HataMesaji"] = "Puan notu 0 ile 100 arasında olmalıdır.";
             return RedirectToPage();
         }
 
@@ -249,17 +270,23 @@ public class OnayMerkeziModel : PageModel
             return NotFound();
         }
 
+        if (kayit.KayitOnayDurumu != OnayDurumu.Onaylandi)
+        {
+            TempData["HataMesaji"] = "Yalnızca ders kaydı onaylanmış kayıtlar üzerinde not düzeltmesi yapılabilir.";
+            return RedirectToPage();
+        }
+
         var koordinatorId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        var harf = yeniHarfNotu.Trim().ToUpperInvariant();
         kayit.HarfNotu = harf;
         kayit.PuanNotu = yeniPuanNotu;
         kayit.NotOnayDurumu = OnayDurumu.Onaylandi;
         kayit.NotOnayTarihi = DateTime.UtcNow;
         kayit.NotOnaylayanId = koordinatorId;
-        kayit.DersDurumu = HarfNotuGectiMi(harf) ? DersDurumu.Gecti : DersDurumu.Kaldi;
+        kayit.DersDurumu = HarfNotundanDurumHesapla(harf);
 
+        var puanMetni = yeniPuanNotu.HasValue ? yeniPuanNotu.Value.ToString("0.##") : "-";
         await _db.KaydetAsync(
-            aciklama: $"Onaylı kayıt koordinatör tarafından {harf} / {yeniPuanNotu} olarak düzeltildi. Gerekçe: {gerekce.Trim()}",
+            aciklama: $"Onaylı kayıt koordinatör tarafından {harf} / {puanMetni} olarak düzeltildi. Gerekçe: {gerekce.Trim()}",
             islemTuru: "Guncelleme");
 
         TempData["BasariMesaji"] = "Onaylı kayıt gerekçesiyle düzeltildi ve denetim izine kaydedildi.";
@@ -299,5 +326,16 @@ public class OnayMerkeziModel : PageModel
     public static bool HarfNotuGectiMi(string? harfNotu)
     {
         return harfNotu?.ToUpperInvariant() is "AA" or "BA" or "BB" or "CB" or "CC" or "DC" or "DD" or "MU";
+    }
+
+    public static DersDurumu HarfNotundanDurumHesapla(string harfNotu, bool muafMi = false)
+    {
+        var harf = harfNotu.Trim().ToUpperInvariant();
+        if (harf == "MU" || muafMi)
+        {
+            return DersDurumu.Muaf;
+        }
+
+        return HarfNotuGectiMi(harf) ? DersDurumu.Gecti : DersDurumu.Kaldi;
     }
 }

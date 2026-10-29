@@ -42,7 +42,7 @@ public class NotGirisiModel : PageModel
         return Page();
     }
 
-    public async Task<IActionResult> OnPostNotGirAsync(int kayitId, string harfNotu, decimal puanNotu)
+    public async Task<IActionResult> OnPostNotGirAsync(int kayitId, string? harfNotu, decimal? puanNotu)
     {
         var kullaniciId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var ogrenci = await _db.Ogrenciler.FirstOrDefaultAsync(o => o.KullaniciId == kullaniciId);
@@ -69,8 +69,8 @@ public class NotGirisiModel : PageModel
             return RedirectToPage();
         }
 
-        var harf = harfNotu.Trim().ToUpperInvariant();
-        if (!GecerliHarfNotlari.Contains(harf) || puanNotu is < 0m or > 100m)
+        var harf = (harfNotu ?? string.Empty).Trim().ToUpperInvariant();
+        if (!GecerliHarfNotlari.Contains(harf) || puanNotu is null or < 0m or > 100m)
         {
             TempData["HataMesaji"] = "Geçerli bir harf notu ve 0-100 arasında puan giriniz.";
             return RedirectToPage();

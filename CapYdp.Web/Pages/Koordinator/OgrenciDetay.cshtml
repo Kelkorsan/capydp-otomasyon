@@ -222,20 +222,24 @@
                     }
                 </select>
             </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold">Harf Notu</label>
+                <select name="harfNotu" class="form-select form-select-sm" required>
+                    @foreach (var h in OnayMerkeziModel.KoordinatorGecerliHarfNotlari)
+                    {
+                        <option value="@h" selected="@(h == "BB")">@h</option>
+                    }
+                </select>
+            </div>
             <div class="col-md-1">
-                <label class="form-label small fw-semibold">Harf</label>
-                <input type="text" name="harfNotu" class="form-control form-control-sm" placeholder="BB" maxlength="2" required />
-            </div>
-            <div class="col-md-2">
                 <label class="form-label small fw-semibold">Puan</label>
-                <input type="number" name="puanNotu" step="0.01" min="0" max="100" class="form-control form-control-sm" placeholder="80" required />
+                <input type="number" name="puanNotu" step="0.01" min="0" max="100" class="form-control form-control-sm" placeholder="80" />
             </div>
             <div class="col-md-2">
-                <label class="form-label small fw-semibold">Sonuç</label>
-                <select name="dersDurumu" class="form-select form-select-sm">
-                    <option value="Gecti">Geçti</option>
-                    <option value="Kaldi">Kaldı</option>
-                    <option value="Muaf">Muaf</option>
+                <label class="form-label small fw-semibold">Kayıt Türü</label>
+                <select name="muafMi" class="form-select form-select-sm">
+                    <option value="false">Normal (Harfe Göre)</option>
+                    <option value="true">Muafiyet (Muaf)</option>
                 </select>
             </div>
             <div class="col-12 text-end">
@@ -282,7 +286,11 @@
                         <td>
                             @if (!string.IsNullOrEmpty(dk.HarfNotu))
                             {
-                                <strong>@dk.HarfNotu</strong> <span class="text-muted small">· @dk.PuanNotu</span>
+                                <strong>@dk.HarfNotu</strong>
+                                @if (dk.PuanNotu.HasValue)
+                                {
+                                    <span class="text-muted small">· @dk.PuanNotu</span>
+                                }
                             }
                             else
                             {

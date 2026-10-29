@@ -158,13 +158,67 @@ public class OgrenciDetayModel : PageModel
         int id,
         int donemId,
         int dersId,
-        string harfNotu,
-        decimal puanNotu,
-        DersDurumu dersDurumu)
+        string? harfNotu,
+        decimal? puanNotu,
+        bool muafMi = false)
     {
+        var ogrenci = await _db.Ogrenciler.FindAsync(id);
+        if (ogrenci is null)
+        {
+            return NotFound();
+        }
+
+        var harf = (harfNotu ?? string.Empty).Trim().ToUpperInvariant();
+        if (!OnayMerkeziModel.KoordinatorGecerliHarfNotlari.Contains(harf))
+        {
+            TempData["HataMesaji"] = "Geçerli bir harf notu seçiniz (AA, BA, BB, CB, CC, DC, DD, FD, FF, DZ, MU).";
+            return RedirectToPage(new { id });
+        }
+
+        if (muafMi && !OnayMerkeziModel.HarfNotuGectiMi(harf))
+        {
+            TempData["HataMesaji"] = "Başarısız harf notu (FD, FF, DZ) ile muafiyet kaydı oluşturulamaz.";
+            return RedirectToPage(new { id });
+        }
+
+        if (harf != "MU" && !muafMi && puanNotu is null)
+        {
+            TempData["HataMesaji"] = "MU (Muaf) dışındaki ders kayıtları için 0-100 arasında puan girilmelidir.";
+            return RedirectToPage(new { id });
+        }
+
+        if (puanNotu is < 0m or > 100m)
+        {
+            TempData["HataMesaji"] = "Puan notu 0 ile 100 arasında olmalıdır.";
+            return RedirectToPage(new { id });
+        }
+
+        var donemVarMi = await _db.AkademikDonemler.AnyAsync(d => d.Id == donemId);
+        var ders = await _db.Dersler.FirstOrDefaultAsync(d => d.Id == dersId && d.AktifMi);
+        if (!donemVarMi || ders is null)
+        {
+            TempData["HataMesaji"] = "Geçerli bir dönem ve aktif katalog dersi seçilmelidir.";
+            return RedirectToPage(new { id });
+        }
+
+        var ayniDonemdeVarMi = await _db.DersKayitlari.AnyAsync(k =>
+            k.OgrenciId == id
+            && k.DersId == dersId
+            && k.DonemId == donemId
+            && k.KayitOnayDurumu != OnayDurumu.Reddedildi
+            && k.KayitOnayDurumu != OnayDurumu.IptalEdildi);
+
+        if (ayniDonemdeVarMi)
+        {
+            TempData["HataMesaji"] = $"{ders.DersKodu} dersi için seçilen dönemde zaten aktif bir kayıt bulunuyor.";
+            return RedirectToPage(new { id });
+        }
+
         var koordinatorId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var oncekiDenemeSayisi = await _db.DersKayitlari
             .CountAsync(k => k.OgrenciId == id && k.DersId == dersId);
+
+        var hesaplananDurum = OnayMerkeziModel.HarfNotundanDurumHesapla(harf, muafMi);
 
         _db.DersKayitlari.Add(new DersKayit
         {
@@ -174,19 +228,19 @@ public class OgrenciDetayModel : PageModel
             KayitOnayDurumu = OnayDurumu.Onaylandi,
             KayitOnayTarihi = DateTime.UtcNow,
             KayitOnaylayanId = koordinatorId,
-            HarfNotu = harfNotu.Trim().ToUpperInvariant(),
+            HarfNotu = harf,
             PuanNotu = puanNotu,
             NotOnayDurumu = OnayDurumu.Onaylandi,
             NotOnayTarihi = DateTime.UtcNow,
             NotOnaylayanId = koordinatorId,
-            DersDurumu = dersDurumu,
+            DersDurumu = hesaplananDurum,
             DenemeSayisi = oncekiDenemeSayisi + 1,
             GirenId = koordinatorId,
             GeriyeDonukMu = true
         });
 
-        await _db.KaydetAsync($"Mevcut öğrenci aktarımı kapsamında geriye dönük ders/not kaydı ({harfNotu}) eklendi.");
-        TempData["BasariMesaji"] = "Geriye dönük ders ve not kaydı onaylı olarak işlendi.";
+        await _db.KaydetAsync($"Mevcut öğrenci aktarımı kapsamında geriye dönük ders/not kaydı ({ders.DersKodu}: {harf} -> {hesaplananDurum}) eklendi.");
+        TempData["BasariMesaji"] = $"Geriye dönük ders ve not kaydı ({ders.DersKodu} — {harf}, {hesaplananDurum}) onaylı olarak işlendi.";
         return RedirectToPage(new { id });
     }
 
