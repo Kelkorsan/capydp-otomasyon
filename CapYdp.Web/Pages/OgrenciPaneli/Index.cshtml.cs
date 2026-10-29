@@ -17,12 +17,13 @@ public class IndexModel : PageModel
     }
 
     public Ogrenci Ogrenci { get; set; } = null!;
-    public int ToplamHedefAkts { get; set; }
-    public int TamamlananAkts { get; set; }
-    public int KalanAkts => Math.Max(0, ToplamHedefAkts - TamamlananAkts);
-    public int TamamlananDersSayisi { get; set; }
+    public ProtokolAktsOzeti AktsOzeti { get; set; } = null!;
+    public int ToplamHedefAkts => AktsOzeti.ToplamHedefAkts;
+    public int TamamlananAkts => AktsOzeti.TamamlananAkts;
+    public int KalanAkts => AktsOzeti.KalanAkts;
+    public int TamamlananDersSayisi => AktsOzeti.TamamlananDersSayisi;
     public int BekleyenIslemSayisi { get; set; }
-    public HashSet<int> GecilenDersIdleri { get; set; } = [];
+    public HashSet<int> GecilenDersIdleri => AktsOzeti.GecilenDersIdleri;
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -44,24 +45,7 @@ public class IndexModel : PageModel
         }
 
         Ogrenci = ogrenci;
-
-        ToplamHedefAkts = Ogrenci.DersListesi
-            .Where(dl => dl.Durum != DersListesiDurumu.Cikarildi)
-            .Sum(dl => dl.Ders.Akts);
-
-        GecilenDersIdleri = Ogrenci.DersKayitlari
-            .Where(dk => dk.NotOnayDurumu == OnayDurumu.Onaylandi
-                         && dk.DersDurumu is DersDurumu.Gecti or DersDurumu.Muaf)
-            .Select(dk => dk.DersId)
-            .Union(Ogrenci.DersListesi.Where(dl => dl.Durum == DersListesiDurumu.Muaf).Select(dl => dl.DersId))
-            .ToHashSet();
-
-        TamamlananAkts = Ogrenci.DersListesi
-            .Where(dl => dl.Durum != DersListesiDurumu.Cikarildi && GecilenDersIdleri.Contains(dl.DersId))
-            .Sum(dl => dl.Ders.Akts);
-
-        TamamlananDersSayisi = Ogrenci.DersListesi
-            .Count(dl => dl.Durum != DersListesiDurumu.Cikarildi && GecilenDersIdleri.Contains(dl.DersId));
+        AktsOzeti = ProtokolHesaplayici.Hesapla(Ogrenci);
 
         BekleyenIslemSayisi = Ogrenci.DersKayitlari
             .Count(dk => dk.KayitOnayDurumu == OnayDurumu.Bekliyor || dk.NotOnayDurumu == OnayDurumu.Bekliyor);

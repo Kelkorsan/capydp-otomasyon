@@ -28,13 +28,23 @@
                 <div class="mb-1"><strong>Anadal:</strong> @Model.Ogrenci.AnadalFakulte / @Model.Ogrenci.AnadalBolum</div>
                 <div class="mb-1"><strong>Kabul Dönemi:</strong> @Model.Ogrenci.KabulDonemi.DonemAdi</div>
                 <hr class="my-2" />
-                <div><strong>AKTS Tamamlanma Durumu:</strong></div>
+                <div><strong>Mezuniyet / Sertifika AKTS Durumu:</strong></div>
                 <div class="d-flex justify-content-between small mt-1">
-                    <span>Tamamlanan: <strong>@Model.TamamlananAkts AKTS</strong></span>
+                    <span>Tamamlanan: <strong>@Model.TamamlananAkts / @Model.ToplamHedefAkts AKTS</strong></span>
                     <span>Kalan: <strong>@Model.KalanAkts AKTS</strong></span>
                 </div>
                 <div class="progress mt-1" style="height: 10px;">
                     <div class="progress-bar bg-success" role="progressbar" style="width: @(yuzde)%"></div>
+                </div>
+                <div class="text-muted mt-1" style="font-size: 0.78rem;">
+                    @if (Model.Ogrenci.ProgramTuru == ProgramTuru.CAP)
+                    {
+                        <span>Protokol hedefi: @Model.AktsOzeti.ZorunluHedefAkts zorunlu + @Model.AktsOzeti.TeknikSecmeliHedefAkts teknik seçmeli AKTS (@Model.AktsOzeti.TamamlananDersSayisi / @Model.AktsOzeti.ToplamHedefDersSayisi ders)</span>
+                    }
+                    else
+                    {
+                        <span>YDP sertifika hedefi: en az @ProtokolHesaplayici.YdpAsgariHedefAkts AKTS ve @ProtokolHesaplayici.YdpAsgariHedefDersSayisi ders (@Model.AktsOzeti.TamamlananDersSayisi / @Model.AktsOzeti.ToplamHedefDersSayisi ders)</span>
+                    }
                 </div>
             </div>
         </div>
@@ -101,6 +111,10 @@
         <span class="fw-semibold">
             @(Model.Ogrenci.ProgramTuru == ProgramTuru.YDP ? "Yan Dal Ders Planı" : "Çift Anadal Protokol Ders Listesi")
             <span class="badge bg-secondary ms-1">@Model.Ogrenci.DersListesi.Count ders</span>
+            @if (Model.Ogrenci.ProgramTuru == ProgramTuru.CAP)
+            {
+                <span class="badge bg-light text-dark border ms-1">+ @ProtokolHesaplayici.CapTeknikSecmeliHedefDersSayisi teknik seçmeli (@ProtokolHesaplayici.CapTeknikSecmeliHedefAkts AKTS havuz kotası)</span>
+            }
         </span>
         <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#dersAtamaPanel">
             + Katalogdan Ders Ata

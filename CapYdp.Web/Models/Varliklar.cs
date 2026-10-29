@@ -256,3 +256,118 @@ public class IslemKaydi
     [MaxLength(45)]
     public string? IpAdresi { get; set; }
 }
+
+public record ProtokolAktsOzeti(
+    int ToplamHedefAkts,
+    int TamamlananAkts,
+    int KalanAkts,
+    int TamamlananDersSayisi,
+    int ToplamHedefDersSayisi,
+    int ZorunluHedefAkts,
+    int TeknikSecmeliHedefAkts,
+    int TamamlananTeknikSecmeliAkts,
+    HashSet<int> GecilenDersIdleri);
+
+/// <summary>
+/// ÇAP ve YDP mezuniyet/sertifika AKTS yükümlülüklerini resmi yönerge ve protokole göre tek merkezden hesaplar.
+/// </summary>
+public static class ProtokolHesaplayici
+{
+    // Selçuk Üni. EEM -> Bilgisayar Müh. ÇAP Kabul ve Ders Protokol Formu:
+    // 20 zorunlu ders (103 AKTS) + 8 teknik seçmeli ders (32 AKTS: 5.yy 3x4, 6.yy 3x4, 7.yy 2x4) = 135 AKTS.
+    public const int CapTeknikSecmeliHedefAkts = 32;
+    public const int CapTeknikSecmeliHedefDersSayisi = 8;
+
+    // Selçuk Üni. Yan Dal Yönergesi Md. 5(g) (YDP-AKTS-01): en az 30 AKTS ve en az 6 ders.
+    public const int YdpAsgariHedefAkts = 30;
+    public const int YdpAsgariHedefDersSayisi = 6;
+
+    public static ProtokolAktsOzeti Hesapla(Ogrenci ogrenci)
+    {
+        var aktifListe = ogrenci.DersListesi
+            .Where(dl => dl.Durum != DersListesiDurumu.Cikarildi)
+            .ToList();
+
+        var onayliGecilenKayitlar = ogrenci.DersKayitlari
+            .Where(dk => dk.NotOnayDurumu == OnayDurumu.Onaylandi
+                         && dk.DersDurumu is DersDurumu.Gecti or DersDurumu.Muaf)
+            .ToList();
+
+        var gecilenDersIdleri = onayliGecilenKayitlar
+            .Select(dk => dk.DersId)
+            .Union(aktifListe.Where(dl => dl.Durum == DersListesiDurumu.Muaf).Select(dl => dl.DersId))
+            .ToHashSet();
+
+        var listedenTamamlanan = aktifListe
+            .Where(dl => gecilenDersIdleri.Contains(dl.DersId))
+            .ToList();
+
+        var tumListeDersIdleri = ogrenci.DersListesi
+            .Select(dl => dl.DersId)
+            .ToHashSet();
+
+        // Protokol listesi dışında ders havuzundan alınıp onaylı olarak geçilen/muaf olunan dersler
+        var havuzdanTamamlananDersler = onayliGecilenKayitlar
+            .Where(dk => !tumListeDersIdleri.Contains(dk.DersId))
+            .Select(dk => dk.Ders)
+            .DistinctBy(d => d.Id)
+            .ToList();
+
+        var tamamlananAkts = listedenTamamlanan.Sum(dl => dl.Ders.Akts)
+                             + havuzdanTamamlananDersler.Sum(d => d.Akts);
+
+        var tamamlananDersSayisi = listedenTamamlanan.Count + havuzdanTamamlananDersler.Count;
+
+        var tamamlananTeknikSecmeliAkts =
+            listedenTamamlanan.Where(dl => dl.Ders.DersTuru == DersTuru.TeknikSecmeli).Sum(dl => dl.Ders.Akts)
+            + havuzdanTamamlananDersler.Where(d => d.DersTuru == DersTuru.TeknikSecmeli).Sum(d => d.Akts);
+
+        if (ogrenci.ProgramTuru == ProgramTuru.CAP)
+        {
+            var zorunluListeAkts = aktifListe
+                .Where(dl => dl.Ders.DersTuru == DersTuru.Zorunlu)
+                .Sum(dl => dl.Ders.Akts);
+            var listedekiSecmeliAkts = aktifListe
+                .Where(dl => dl.Ders.DersTuru == DersTuru.TeknikSecmeli)
+                .Sum(dl => dl.Ders.Akts);
+            var listedekiSecmeliAdet = aktifListe
+                .Count(dl => dl.Ders.DersTuru == DersTuru.TeknikSecmeli);
+
+            var ekSecmeliAktsKotasi = Math.Max(0, CapTeknikSecmeliHedefAkts - listedekiSecmeliAkts);
+            var ekSecmeliDersKotasi = Math.Max(0, CapTeknikSecmeliHedefDersSayisi - listedekiSecmeliAdet);
+
+            var toplamHedefAkts = aktifListe.Sum(dl => dl.Ders.Akts) + ekSecmeliAktsKotasi;
+            var toplamHedefDers = aktifListe.Count + ekSecmeliDersKotasi;
+            var teknikHedefAkts = Math.Max(CapTeknikSecmeliHedefAkts, listedekiSecmeliAkts);
+
+            return new ProtokolAktsOzeti(
+                ToplamHedefAkts: toplamHedefAkts,
+                TamamlananAkts: tamamlananAkts,
+                KalanAkts: Math.Max(0, toplamHedefAkts - tamamlananAkts),
+                TamamlananDersSayisi: tamamlananDersSayisi,
+                ToplamHedefDersSayisi: toplamHedefDers,
+                ZorunluHedefAkts: zorunluListeAkts,
+                TeknikSecmeliHedefAkts: teknikHedefAkts,
+                TamamlananTeknikSecmeliAkts: tamamlananTeknikSecmeliAkts,
+                GecilenDersIdleri: gecilenDersIdleri);
+        }
+        else
+        {
+            var planlananAkts = aktifListe.Sum(dl => dl.Ders.Akts);
+            var planlananDers = aktifListe.Count;
+            var toplamHedefAkts = Math.Max(YdpAsgariHedefAkts, planlananAkts);
+            var toplamHedefDers = Math.Max(YdpAsgariHedefDersSayisi, planlananDers);
+
+            return new ProtokolAktsOzeti(
+                ToplamHedefAkts: toplamHedefAkts,
+                TamamlananAkts: tamamlananAkts,
+                KalanAkts: Math.Max(0, toplamHedefAkts - tamamlananAkts),
+                TamamlananDersSayisi: tamamlananDersSayisi,
+                ToplamHedefDersSayisi: toplamHedefDers,
+                ZorunluHedefAkts: planlananAkts,
+                TeknikSecmeliHedefAkts: 0,
+                TamamlananTeknikSecmeliAkts: tamamlananTeknikSecmeliAkts,
+                GecilenDersIdleri: gecilenDersIdleri);
+        }
+    }
+}

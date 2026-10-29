@@ -5,6 +5,16 @@
     var yuzde = Model.ToplamHedefAkts > 0
         ? (int)Math.Round(100.0 * Model.TamamlananAkts / Model.ToplamHedefAkts)
         : 0;
+    var aktifProtokolListesi = Model.Ogrenci.DersListesi
+        .Where(x => x.Durum != DersListesiDurumu.Cikarildi)
+        .ToList();
+    var listedekiSecmeliAkts = aktifProtokolListesi
+        .Where(x => x.Ders.DersTuru == DersTuru.TeknikSecmeli)
+        .Sum(x => x.Ders.Akts);
+    var listedekiSecmeliAdet = aktifProtokolListesi
+        .Count(x => x.Ders.DersTuru == DersTuru.TeknikSecmeli);
+    var kalanHavuzSecmeliAkts = Math.Max(0, ProtokolHesaplayici.CapTeknikSecmeliHedefAkts - listedekiSecmeliAkts);
+    var kalanHavuzSecmeliAdet = Math.Max(0, ProtokolHesaplayici.CapTeknikSecmeliHedefDersSayisi - listedekiSecmeliAdet);
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -32,15 +42,25 @@
                 <div class="progress mt-2" style="height: 8px;">
                     <div class="progress-bar bg-success" style="width: @(yuzde)%"></div>
                 </div>
+                <div class="small text-muted mt-1">
+                    @if (Model.Ogrenci.ProgramTuru == ProgramTuru.CAP)
+                    {
+                        <span>@Model.AktsOzeti.ZorunluHedefAkts zorunlu + @Model.AktsOzeti.TeknikSecmeliHedefAkts teknik seçmeli</span>
+                    }
+                    else
+                    {
+                        <span>YDP hedefi (en az @ProtokolHesaplayici.YdpAsgariHedefAkts AKTS · @ProtokolHesaplayici.YdpAsgariHedefDersSayisi ders)</span>
+                    }
+                </div>
             </div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
-                <div class="text-muted small">Kalan AKTS</div>
+                <div class="text-muted small">@(Model.Ogrenci.ProgramTuru == ProgramTuru.CAP ? "Mezuniyet İçin Kalan AKTS" : "Sertifika İçin Kalan AKTS")</div>
                 <div class="display-6 fw-bold text-primary">@Model.KalanAkts</div>
-                <span class="small text-muted">Tamamlanan Ders: @Model.TamamlananDersSayisi</span>
+                <span class="small text-muted">Tamamlanan Ders: @Model.TamamlananDersSayisi / @Model.AktsOzeti.ToplamHedefDersSayisi</span>
             </div>
         </div>
     </div>
@@ -162,7 +182,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var dl in Model.Ogrenci.DersListesi.Where(x => x.Durum != DersListesiDurumu.Cikarildi))
+                @foreach (var dl in aktifProtokolListesi)
                 {
                     var tamamlandi = Model.GecilenDersIdleri.Contains(dl.DersId);
                     <tr>
@@ -183,6 +203,29 @@
                             else
                             {
                                 <span class="badge bg-secondary">Kalan Ders</span>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (Model.Ogrenci.ProgramTuru == ProgramTuru.CAP && kalanHavuzSecmeliAkts > 0)
+                {
+                    <tr class="table-light">
+                        <td class="ps-3"><code>HAVUZ</code></td>
+                        <td>
+                            Teknik Seçmeli Ders Yükümlülüğü
+                            <span class="text-muted small d-block">@kalanHavuzSecmeliAdet adet ders (5. yy: 3 · 6. yy: 3 · 7. yy: 2) bölüm ders havuzundan seçilir</span>
+                        </td>
+                        <td>5–7. Yarıyıl</td>
+                        <td>@kalanHavuzSecmeliAkts</td>
+                        <td class="small">TeknikSecmeli</td>
+                        <td class="pe-3">
+                            @if (Model.AktsOzeti.TamamlananTeknikSecmeliAkts >= Model.AktsOzeti.TeknikSecmeliHedefAkts)
+                            {
+                                <span class="badge bg-success">Tamamlandı (@Model.AktsOzeti.TamamlananTeknikSecmeliAkts / @Model.AktsOzeti.TeknikSecmeliHedefAkts AKTS)</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">@Model.AktsOzeti.TamamlananTeknikSecmeliAkts / @Model.AktsOzeti.TeknikSecmeliHedefAkts AKTS Tamamlandı</span>
                             }
                         </td>
                     </tr>

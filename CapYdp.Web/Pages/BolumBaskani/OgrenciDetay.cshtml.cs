@@ -16,6 +16,7 @@ public class OgrenciDetayModel : PageModel
     }
 
     public Ogrenci Ogrenci { get; set; } = null!;
+    public ProtokolAktsOzeti AktsOzeti { get; set; } = null!;
 
     public async Task<IActionResult> OnGetAsync(int id)
     {
@@ -33,6 +34,7 @@ public class OgrenciDetayModel : PageModel
         }
 
         Ogrenci = ogrenci;
+        AktsOzeti = ProtokolHesaplayici.Hesapla(Ogrenci);
         return Page();
     }
 }

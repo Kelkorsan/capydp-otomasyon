@@ -20,9 +20,10 @@ public class OgrenciDetayModel : PageModel
     public List<Ders> AktifKatalogDersleri { get; set; } = [];
     public List<AkademikDonem> Donemler { get; set; } = [];
 
-    public int ToplamHedefAkts { get; set; }
-    public int TamamlananAkts { get; set; }
-    public int KalanAkts => Math.Max(0, ToplamHedefAkts - TamamlananAkts);
+    public ProtokolAktsOzeti AktsOzeti { get; set; } = null!;
+    public int ToplamHedefAkts => AktsOzeti.ToplamHedefAkts;
+    public int TamamlananAkts => AktsOzeti.TamamlananAkts;
+    public int KalanAkts => AktsOzeti.KalanAkts;
 
     public async Task<IActionResult> OnGetAsync(int id)
     {
@@ -274,21 +275,6 @@ public class OgrenciDetayModel : PageModel
 
     private void AktsHesapla()
     {
-        // Yalnızca aktif veya muaf protokol dersleri hedef AKTS'yi oluşturur.
-        ToplamHedefAkts = Ogrenci.DersListesi
-            .Where(d => d.Durum != DersListesiDurumu.Cikarildi)
-            .Sum(d => d.Ders.Akts);
-
-        // Yalnızca ONAYLANMIŞ ve Geçti/Muaf durumundaki dersler tamamlanan AKTS'ye sayılır (Rapor Bölüm 7.2).
-        var gecilenDersIdleri = Ogrenci.DersKayitlari
-            .Where(dk => dk.NotOnayDurumu == OnayDurumu.Onaylandi
-                         && dk.DersDurumu is DersDurumu.Gecti or DersDurumu.Muaf)
-            .Select(dk => dk.DersId)
-            .Union(Ogrenci.DersListesi.Where(dl => dl.Durum == DersListesiDurumu.Muaf).Select(dl => dl.DersId))
-            .ToHashSet();
-
-        TamamlananAkts = Ogrenci.DersListesi
-            .Where(dl => dl.Durum != DersListesiDurumu.Cikarildi && gecilenDersIdleri.Contains(dl.DersId))
-            .Sum(dl => dl.Ders.Akts);
+        AktsOzeti = ProtokolHesaplayici.Hesapla(Ogrenci);
     }
 }

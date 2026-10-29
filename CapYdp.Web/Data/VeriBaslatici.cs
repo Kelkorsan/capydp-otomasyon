@@ -173,15 +173,15 @@ public static class VeriBaslatici
             db.Ogrenciler.AddRange(ahmet, zeynep);
             await db.KaydetAsync("Demo ÇAP ve YDP öğrencileri eklendi.");
 
-            // Ahmet'in protokol ders listesi
-            string[] ahmetProtokolKodlari = ["3301156", "3301351", "3301352", "3301354", "3301452", "3301454", "3301455", "3301553", "3301651"];
-            foreach (var kod in ahmetProtokolKodlari)
+            // Ahmet'in ÇAP protokol zorunlu ders listesi (EEM -> Bilgisayar Müh. Protokolü: 20 zorunlu ders = 103 AKTS; + 8 teknik seçmeli = 135 AKTS)
+            var muafiyetliDersIdSeti = (await db.MuafiyetKurallari.Select(m => m.CapDersId).ToListAsync()).ToHashSet();
+            foreach (var zorunluDers in dersler.Values.Where(d => d.DersTuru == DersTuru.Zorunlu).OrderBy(d => d.Yariyil).ThenBy(d => d.DersKodu))
             {
                 db.OgrenciDersListeleri.Add(new OgrenciDersListesi
                 {
                     OgrenciId = ahmet.Id,
-                    DersId = dersler[kod].Id,
-                    OzelSartliMi = kod is "3301354" or "3301651",
+                    DersId = zorunluDers.Id,
+                    OzelSartliMi = muafiyetliDersIdSeti.Contains(zorunluDers.Id),
                     Durum = DersListesiDurumu.Aktif,
                     DegisiklikGerekce = "İlk protokol ataması"
                 });
@@ -277,6 +277,43 @@ public static class VeriBaslatici
             );
 
             await db.KaydetAsync("Demo öğrenci ders listeleri ve örnek dönem kayıtları oluşturuldu.");
+        }
+
+        // 6) Mevcut ortamda demo ÇAP öğrencisinin (223301045) protokol zorunlu derslerinde eksik varsa resmi protokole (20 zorunlu = 103 AKTS, toplam 135 AKTS) tamamla
+        var mevcutAhmet = await db.Ogrenciler
+            .Include(o => o.DersListesi)
+            .FirstOrDefaultAsync(o => o.OgrenciNo == "223301045" && o.ProgramTuru == ProgramTuru.CAP);
+
+        if (mevcutAhmet is not null)
+        {
+            var zorunluDersler = await db.Dersler
+                .Where(d => d.AktifMi && d.DersTuru == DersTuru.Zorunlu)
+                .OrderBy(d => d.Yariyil)
+                .ThenBy(d => d.DersKodu)
+                .ToListAsync();
+            var muafiyetliDersIdleri = (await db.MuafiyetKurallari.Select(m => m.CapDersId).ToListAsync()).ToHashSet();
+            var atanmisDersIdleri = mevcutAhmet.DersListesi.Select(dl => dl.DersId).ToHashSet();
+
+            var eklenecekler = zorunluDersler
+                .Where(d => !atanmisDersIdleri.Contains(d.Id))
+                .ToList();
+
+            if (eklenecekler.Count > 0)
+            {
+                foreach (var d in eklenecekler)
+                {
+                    db.OgrenciDersListeleri.Add(new OgrenciDersListesi
+                    {
+                        OgrenciId = mevcutAhmet.Id,
+                        DersId = d.Id,
+                        OzelSartliMi = muafiyetliDersIdleri.Contains(d.Id),
+                        Durum = DersListesiDurumu.Aktif,
+                        DegisiklikGerekce = "İlk protokol ataması"
+                    });
+                }
+
+                await db.KaydetAsync("Demo ÇAP öğrencisinin protokol zorunlu ders listesi resmi 135 AKTS protokolüne tamamlandı.");
+            }
         }
     }
 
