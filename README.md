@@ -31,7 +31,7 @@ protokol ders listesi, ders kaydı, not girişi ve koordinatör onay süreçleri
 - **Onay tabanlı akış:** Öğrencinin girdiği ders kaydı ve not, koordinatör onaylayana kadar `Onay Bekliyor` durumundadır; onaylanan kayıt kilitlenir.
 - **Gerekçeli red / düzeltme / iptal:** Hiçbir kayıt fiziksel olarak silinmez (soft-delete); her değişiklik gerekçesiyle saklanır.
 - **Denetim izi (Audit Trail):** Tüm ekleme/güncellemeler kim, ne zaman, hangi IP'den, eski → yeni değer bilgisiyle `IslemKaydi` tablosuna otomatik yazılır ve değiştirilemez.
-- **Protokol / katalog ayrımı, geçilen ders koruması** ve **dönemlik AKTS yük uyarısı.**
+- **Protokol / katalog ayrımı** ve **geçilen ders koruması.**
 - **Güvenlik:** Parola politikası, 5 hatalı denemede 15 dk hesap kilidi, HttpOnly + SameSite çerez, CSRF token, güvenlik başlıkları (nosniff, X-Frame-Options), konteynerde root olmayan kullanıcı.
 
 ## Yerel çalıştırma

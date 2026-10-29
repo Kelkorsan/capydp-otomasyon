@@ -8,8 +8,6 @@
     var secilenAkts = aktifSecimler.Sum(k => k.Ders.Akts);
     var secilenDersSayisi = aktifSecimler.Count;
     var protokolDersIdleri = Model.ProtokolDerslerim.Select(dl => dl.DersId).ToHashSet();
-    var asiriYukUyarisiVar = secilenAkts > DersGirisiModel.VarsayilanDonemMaxAkts
-                             || secilenDersSayisi > DersGirisiModel.VarsayilanDonemMaxDersSayisi;
     var ydpMi = Model.Ogrenci.ProgramTuru == ProgramTuru.YDP;
 }
 
@@ -22,22 +20,11 @@
         </span>
     </div>
     <div class="text-end">
-        <span class="badge @(asiriYukUyarisiVar ? "bg-warning text-dark" : "bg-primary") fs-6">
+        <span class="badge bg-primary fs-6">
             Bu Dönem Seçilen: @secilenAkts AKTS · @secilenDersSayisi Ders
         </span>
-        <div class="small text-muted">Standart dönemlik üst sınır: @DersGirisiModel.VarsayilanDonemMaxAkts AKTS / @DersGirisiModel.VarsayilanDonemMaxDersSayisi ders</div>
     </div>
 </div>
-
-@if (asiriYukUyarisiVar)
-{
-    <div class="alert alert-warning border-warning shadow-sm mb-4">
-        <strong>Dönemlik Kredi ve Ders Yükü Uyarısı:</strong>
-        Bu dönem için toplam <strong>@secilenAkts AKTS ve @secilenDersSayisi ders</strong> seçtiniz.
-        Standart dönemlik üst sınır <strong>@DersGirisiModel.VarsayilanDonemMaxAkts AKTS / @DersGirisiModel.VarsayilanDonemMaxDersSayisi ders</strong> olarak tanımlanmıştır.
-        <em>Sistem seçiminizi engellemez ancak Koordinatör Onay Merkezi ekranında yük uyarısıyla değerlendirilecektir.</em>
-    </div>
-}
 
 <!-- 1) Bu Dönem Seçilen Dersler -->
 <div class="card border-0 shadow-sm mb-4">

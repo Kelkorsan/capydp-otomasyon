@@ -51,12 +51,10 @@
                     @foreach (var k in Model.BekleyenDersKayitlari)
                     {
                         var yuk = Model.OgrenciDonemYukleri.GetValueOrDefault((k.OgrenciId, k.DonemId));
-                        var asiriYuk = yuk.ToplamAkts > DersGirisiModel.VarsayilanDonemMaxAkts
-                                       || yuk.DersSayisi > DersGirisiModel.VarsayilanDonemMaxDersSayisi;
                         var protokolde = Model.ProtokolDersCiftleri.Contains((k.OgrenciId, k.DersId));
                         var dahaOnceGecildi = Model.DahaOnceGecilenCiftler.Contains((k.OgrenciId, k.DersId));
                         var ydpMi = k.Ogrenci.ProgramTuru == ProgramTuru.YDP;
-                        <tr class="@(dahaOnceGecildi ? "table-danger" : asiriYuk ? "table-warning" : "")">
+                        <tr class="@(dahaOnceGecildi ? "table-danger" : "")">
                             <td class="ps-3">
                                 <a asp-page="/Koordinator/OgrenciDetay" asp-route-id="@k.OgrenciId" class="text-decoration-none fw-semibold">
                                     @k.Ogrenci.Kullanici.AdSoyad
@@ -64,12 +62,6 @@
                                 <div class="small text-muted">
                                     <code>@k.Ogrenci.OgrenciNo</code> · Dönem Toplamı: <strong>@yuk.ToplamAkts AKTS · @yuk.DersSayisi ders</strong>
                                 </div>
-                                @if (asiriYuk)
-                                {
-                                    <span class="badge bg-warning text-dark mt-1">
-                                        Dönemlik Yük Aşımı
-                                    </span>
-                                }
                             </td>
                             <td><span class="badge bg-dark">@k.Ogrenci.ProgramTuru</span></td>
                             <td class="small">@k.Donem.DonemAdi</td>

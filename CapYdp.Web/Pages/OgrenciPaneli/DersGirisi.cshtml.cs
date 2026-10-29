@@ -9,10 +9,6 @@ namespace CapYdp.Web.Pages.OgrenciPaneli;
 
 public class DersGirisiModel : PageModel
 {
-    // Faz 2'de KuralParametre tablosundan okunacak varsayılan dönemlik uyarı eşikleri
-    public const int VarsayilanDonemMaxAkts = 30;
-    public const int VarsayilanDonemMaxDersSayisi = 6;
-
     private readonly AppDbContext _db;
 
     public DersGirisiModel(AppDbContext db)
