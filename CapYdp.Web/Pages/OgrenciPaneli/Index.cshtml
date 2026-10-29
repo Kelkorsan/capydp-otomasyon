@@ -117,10 +117,6 @@
                             <span class="badge @(dk.KayitOnayDurumu == OnayDurumu.Onaylandi ? "bg-success" : dk.KayitOnayDurumu == OnayDurumu.Bekliyor ? "bg-warning text-dark" : "bg-danger")">
                                 @dk.KayitOnayDurumu
                             </span>
-                            @if (dk.KayitKilitliMi)
-                            {
-                                <span class="text-muted small ms-1" title="Onaylanan kayıt kilitlenir">🔒</span>
-                            }
                             @if (!string.IsNullOrEmpty(dk.KayitRedGerekce))
                             {
                                 <div class="small text-danger">Gerekçe: @dk.KayitRedGerekce</div>
